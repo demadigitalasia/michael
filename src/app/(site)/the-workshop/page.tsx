@@ -41,6 +41,7 @@ export default function WorkshopPage() {
         <ProcessSteps
           kicker="The workshop · how a stone gets cut"
           title="One stone at a time"
+          photo={{ src: "/editorial/stage-2-blue-opal-sawn.webp", caption: "Slabbing — banding judged under water" }}
           steps={[
             { title: "Slabbed", body: "The slab saw opens the rough under water — banding, colour and flaws judged face by face.", spec: "Laguna agate · 6.4 kg lot · 0.8 mm blade" },
             { title: "Preformed", body: "The shape is drawn around the best banding, then dopped to a stick and ground to silhouette.", spec: "Freeform drawn around banding · 220 grit" },

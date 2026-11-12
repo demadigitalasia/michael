@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRef, useState, useEffect } from "react";
 import { useScroll, useReducedMotion } from "framer-motion";
 
@@ -9,18 +10,20 @@ export type ProcessStep = { title: string; body: string; spec: string };
  * The Workshop sequence — port JewelwrightMaking (versi scroll, MOTION-SPEC §2.5):
  * Section gelap, langkah 01–05 menyala mengikuti scroll, DUA counter hidup:
  * "Hours at the wheels" (mm:ss, menghitung naik) & "Wheel grit" (80 → 50,000).
- * Baris data mono per langkah.
+ * Baris data mono per langkah. Foto opsional mengisi kolom kiri.
  */
 export function ProcessSteps({
   steps,
   kicker = "The workshop · how a stone gets cut",
   title = "One stone at a time",
   totalHours = 9,
+  photo,
 }: {
   steps: ProcessStep[];
   kicker?: string;
   title?: string;
   totalHours?: number;
+  photo?: { src: string; caption: string };
 }) {
   const sectionRef = useRef<HTMLElement>(null);
   const [step, setStep] = useState(0);
@@ -71,6 +74,16 @@ export function ProcessSteps({
                   {grit.toLocaleString("en-US")}
                 </p>
               </div>
+              {photo && (
+                <figure className="mt-10 max-w-[300px]">
+                  <div className="relative overflow-hidden rounded-[4px]">
+                    <div className="relative aspect-[4/3]">
+                      <Image src={photo.src} alt={photo.caption} fill sizes="300px" className="object-cover" />
+                    </div>
+                  </div>
+                  <figcaption className="eyebrow mt-3 text-milk/50">{photo.caption}</figcaption>
+                </figure>
+              )}
             </div>
           </div>
 

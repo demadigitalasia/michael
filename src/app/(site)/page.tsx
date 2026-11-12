@@ -1,10 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
+import ReactDOM from "react-dom";
 import { ProductCard } from "@/components/product-card";
 import { Reveal } from "@/components/reveal";
 import { Lookbook } from "@/components/lookbook";
 import { CustomFlow } from "@/components/custom-flow";
 import { ProcessSteps } from "@/components/process-steps";
+import { NewsletterForm } from "@/components/newsletter-form";
 import { StatsCounters } from "@/components/stats-counters";
 import { Ticker } from "@/components/ticker";
 import { StatusBadge } from "@/components/status-badge";
@@ -13,7 +15,7 @@ import { prisma } from "@/lib/prisma";
 import { getSettings } from "@/lib/settings";
 import { categories, formatUsd, site } from "@/lib/site";
 
-const HERO_IMG = "/editorial/hero-blue-opal-rough.png";
+const HERO_IMG = "/editorial/hero-blue-opal-rough.webp";
 
 /** ISR: katalog berubah saat admin publish — revalidasi tiap 30 detik. */
 export const revalidate = 30;
@@ -109,10 +111,12 @@ export default async function HomePage() {
 
   return (
     <>
+      {/* Preload hero: tanpa ini, LCP menunggu discoverability render (checklist priorityHinted=false) */}
+      {ReactDOM.preload(HERO_IMG, { as: "image", fetchPriority: "high", imageSizes: "100vw" })}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
       {/* 1 · Hero */}
       <section className="relative min-h-[92svh] overflow-hidden">
-        <Image src={HERO_IMG} alt="Blue-green rough stone with a broad exposed face and pale host rock on a lapidary workbench" fill preload sizes="100vw" className="object-cover" />
+        <Image src={HERO_IMG} alt="Blue-green rough stone with a broad exposed face and pale host rock on a lapidary workbench" fill priority sizes="100vw" className="object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-ink/45 via-transparent to-ink/10" />
         <div className="relative mx-auto flex min-h-[92svh] max-w-7xl flex-col justify-end px-4 pb-16 sm:px-6 lg:px-12">
           <h1 className="display text-milk text-[clamp(64px,12vw,160px)] leading-[0.95]">
@@ -225,7 +229,10 @@ export default async function HomePage() {
       </section>
 
       {/* 5 · The workshop (gelap, scroll-driven) */}
-      <ProcessSteps steps={WORKSHOP_STEPS} />
+      <ProcessSteps
+        steps={WORKSHOP_STEPS}
+        photo={{ src: "/editorial/stage-3-blue-opal-grinding.webp", caption: "The wheels · 280 → 3,000 grit, water cooled" }}
+      />
 
       {/* 6 · Lookbook (pinned horizontal) */}
       <Lookbook photos={lookbookPhotos} />
@@ -339,17 +346,7 @@ export default async function HomePage() {
             <p className="body-muted-dark mt-5 max-w-[52ch] text-[17px] leading-relaxed">
               One email a month: new pieces 48 hours early, a studio story and the odd batch sale. No discounts shouted in capitals.
             </p>
-            <form className="mt-8 flex max-w-md items-center gap-2" action="mailto:hello@example.com" method="get">
-              <input
-                type="email"
-                required
-                placeholder="Your email"
-                className="h-[46px] w-full rounded-full border border-milk/25 bg-transparent px-5 text-[15px] text-milk placeholder:text-milk/40 focus:outline-none focus:ring-1 focus:ring-gold"
-              />
-              <button type="submit" className="h-[46px] flex-none rounded-full bg-milk px-5 text-[15px] font-medium text-ink transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.97]">
-                Join
-              </button>
-            </form>
+            <NewsletterForm />
             <p className="eyebrow mt-4 text-milk/50">We never share your address. Unsubscribe in one click.</p>
           </Reveal>
         </div>

@@ -17,6 +17,7 @@ export function BrandLogo({ tone = "dark", size = "compact" }: BrandLogoProps) {
         width={2076}
         height={757}
         priority
+        sizes="(min-width: 1024px) 174px, 120px"
         className={large ? "h-auto w-[174px]" : "h-auto w-[120px]"}
       />
     );

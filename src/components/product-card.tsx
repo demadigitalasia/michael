@@ -47,7 +47,7 @@ export function ProductCard({ product, eager = false }: { product: ProductLike; 
           {secondary && (
             <Image
               src={secondary.url}
-              alt=""
+              alt={secondary.alt || product.title}
               fill
               sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
               className="object-cover opacity-0 transition-opacity duration-[600ms] group-hover:opacity-100"

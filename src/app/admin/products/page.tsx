@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { effectiveStatus } from "@/lib/products";
 import { formatUsd } from "@/lib/site";
@@ -65,7 +66,23 @@ export default async function AdminProductsPage({
         <tbody>
           {products.map((p) => (
             <tr key={p.id} className="border-b border-ink/10">
-              <td className="py-3 pr-4 text-[14px] font-medium text-ink">{p.title}</td>
+              <td className="py-3 pr-4">
+                <span className="flex items-center gap-3">
+                  <span className="relative size-10 flex-none overflow-hidden rounded-[3px] bg-phold">
+                    {p.images[0] && (
+                      <Image
+                        src={p.images[0].url}
+                        alt=""
+                        width={40}
+                        height={40}
+                        className="object-cover"
+                        unoptimized={p.images[0].url.endsWith(".svg")}
+                      />
+                    )}
+                  </span>
+                  <span className="text-[14px] font-medium text-ink">{p.title}</span>
+                </span>
+              </td>
               <td className="py-3 pr-4 eyebrow text-ink/60">{p.category.toLowerCase().replace("_", " ")}</td>
               <td className="py-3 pr-4 font-mono text-[13px] tabular-nums">{formatUsd(p.priceCents)}</td>
               <td className="py-3 pr-4 eyebrow text-ink/60">{effectiveStatus(p).toLowerCase()}</td>
