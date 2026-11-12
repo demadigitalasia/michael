@@ -32,14 +32,15 @@ export async function listProducts(opts?: {
 }
 
 export async function getFeatured() {
+  // Homepage hanya menampilkan stone yang benar-benar AVAILABLE
   const p = await prisma.product.findFirst({
-    where: { ...publicWhere, featured: true, status: { in: ["AVAILABLE", "RESERVED"] } },
+    where: { ...publicWhere, featured: true, status: "AVAILABLE" },
     include: { images: { orderBy: { sortOrder: "asc" } } },
   });
   if (p) return p;
   // fallback: produk terbaru yang masih tersedia
   return prisma.product.findFirst({
-    where: { ...publicWhere, status: { in: ["AVAILABLE", "RESERVED"] } },
+    where: { ...publicWhere, status: "AVAILABLE" },
     orderBy: { publishedAt: "desc" },
     include: { images: { orderBy: { sortOrder: "asc" } } },
   });

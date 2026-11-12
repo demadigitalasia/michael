@@ -33,7 +33,7 @@ export function ProductCard({ product, eager = false }: { product: ProductLike; 
   return (
     <Link href={`/products/${product.slug}`} className="group block">
       <div className="relative overflow-hidden rounded-[4px] bg-phold">
-        <div className="aspect-[4/5]">
+        <div className="relative aspect-[4/5]">
           {primary && (
             <Image
               src={primary.url}

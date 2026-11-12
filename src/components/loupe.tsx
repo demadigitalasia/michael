@@ -46,7 +46,7 @@ export function Loupe({ src, alt, sizes }: { src: string; alt: string; sizes: st
         </div>
       )}
       {!active && (
-        <span className="eyebrow absolute bottom-3 right-3 rounded-full bg-paper/85 px-3 py-1.5 text-ink/70 backdrop-blur-[6px]">
+        <span className="eyebrow absolute bottom-3 right-3 hidden rounded-full bg-paper/85 px-3 py-1.5 text-ink/70 backdrop-blur-[6px] [@media(pointer:coarse)]:hidden md:block">
           Hover to inspect
         </span>
       )}

@@ -122,12 +122,16 @@ export default async function HomePage() {
             </div>
           </div>
         </div>
-        {/* Annotation callouts */}
-        <div className="eyebrow absolute right-[6%] top-[22%] hidden rotate-0 text-milk lg:block">
-          <span className="text-gold">01</span> — Blue-green opal · rough in matrix
+        {/* Annotation callouts — chip gelap agar terbaca di foto terang */}
+        <div className="eyebrow absolute right-[6%] top-[22%] hidden lg:block">
+          <span className="inline-block rounded-[4px] bg-ink/45 px-3 py-2 text-milk backdrop-blur-[4px]">
+            <span className="text-gold">01</span> — Blue-green opal · rough in matrix
+          </span>
         </div>
-        <div className="eyebrow absolute bottom-[38%] right-[12%] hidden text-milk/80 lg:block">
-          <span className="text-gold">02</span> — Slabbed, ground & polished at our bench
+        <div className="eyebrow absolute bottom-[38%] right-[12%] hidden lg:block">
+          <span className="inline-block rounded-[4px] bg-ink/45 px-3 py-2 text-milk backdrop-blur-[4px]">
+            <span className="text-gold">02</span> — Slabbed, ground & polished at our bench
+          </span>
         </div>
       </section>
 

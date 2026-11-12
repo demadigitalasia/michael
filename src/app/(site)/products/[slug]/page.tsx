@@ -75,24 +75,26 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     <div className="mx-auto max-w-7xl px-4 pb-24 pt-32 sm:px-6 lg:px-12">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      {/* Hero produk: 2 foto berdampingan */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      {/* Hero produk: 2 foto berdampingan (1 foto = tampil penuh) */}
+      <div className={product.images.length > 1 ? "grid gap-4 lg:grid-cols-2" : "grid"}>
         <div className="relative overflow-hidden rounded-[4px] bg-phold">
           <div className="relative aspect-[4/5] lg:aspect-auto lg:h-[560px]">
-            {primary && <Loupe src={primary.url} alt={primary.alt || product.title} sizes="(min-width:1024px) 46vw, 100vw" />}
+            {primary && <Loupe src={primary.url} alt={primary.alt || product.title} sizes={product.images.length > 1 ? "(min-width:1024px) 46vw, 100vw" : "100vw"} />}
           </div>
         </div>
-        <div className="relative hidden overflow-hidden rounded-[4px] bg-phold lg:block">
-          <div className="relative aspect-[4/5] lg:h-[560px]">
-            <Image
-              src={product.images[1]?.url ?? primary?.url ?? ""}
-              alt={product.images[1]?.alt ?? product.title}
-              fill
-              sizes="46vw"
-              className="object-cover"
-            />
+        {product.images.length > 1 && (
+          <div className="relative hidden overflow-hidden rounded-[4px] bg-phold lg:block">
+            <div className="relative aspect-[4/5] lg:h-[560px]">
+              <Image
+                src={product.images[1]?.url ?? primary?.url ?? ""}
+                alt={product.images[1]?.alt ?? product.title}
+                fill
+                sizes="46vw"
+                className="object-cover"
+              />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Info */}
