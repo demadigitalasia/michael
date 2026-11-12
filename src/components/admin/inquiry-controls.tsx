@@ -17,7 +17,7 @@ export function InquiryControls({ id, status, adminNotes }: { id: string; status
       await fetch("/api/admin/custom-orders", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ id, ...form }),
       });
       router.refresh();
     } finally {

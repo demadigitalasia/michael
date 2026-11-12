@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { site } from "@/lib/site";
+import { BrandLogo } from "@/components/brand-logo";
 
 /** Footer — gaya referensi: kolom nav + visit + legal, wordmark besar. */
 export function SiteFooter() {
@@ -8,9 +8,7 @@ export function SiteFooter() {
       <div className="mx-auto max-w-7xl">
         <div className="grid gap-12 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
-            <p className="font-display text-[22px] font-bold uppercase tracking-[0.14em]">
-              {site.shortName}
-            </p>
+            <BrandLogo tone="light" size="large" />
             <p className="body-muted-dark mt-4 max-w-[30ch] text-[15px] leading-relaxed">
               One stone at a time. Cabochons, slabs and rough cut by hand; treatment always disclosed.
             </p>

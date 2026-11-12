@@ -53,10 +53,10 @@ export default async function CustomPage() {
           { title: "It’s yours", body: "Delivered insured, with an origin note and a care card for the specific stone.", meta: "Insured delivery" },
         ]}
         stages={[
-          { src: "/seed/stage-1-rough.svg", tag: "ROUGH · YOUR STONE" },
-          { src: "/seed/stage-2-preform.svg", tag: "PREFORM · DRAWN" },
-          { src: "/seed/stage-3-polish.svg", tag: "POLISHED · ON THE WHEELS" },
-          { src: "/seed/stage-4-done.svg", tag: "FINISHED · IN YOUR HANDS" },
+          { src: "/editorial/stage-1-blue-opal-rough.png", tag: "ROUGH · YOUR STONE" },
+          { src: "/editorial/stage-2-blue-opal-sawn.png", tag: "SAWN · COLOUR REVEALED" },
+          { src: "/editorial/stage-3-blue-opal-grinding.png", tag: "SHAPED · ON THE WHEELS" },
+          { src: "/editorial/stage-4-blue-opal-finished.png", tag: "FINISHED · IN YOUR HANDS" },
         ]}
       />
 

@@ -27,7 +27,7 @@ export function OrderControls({
       await fetch("/api/admin/orders", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ id, ...form }),
       });
       router.refresh();
     } finally {

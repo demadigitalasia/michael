@@ -12,7 +12,7 @@ import { countByCategory, getFeatured, listProducts } from "@/lib/products";
 import { prisma } from "@/lib/prisma";
 import { categories, formatUsd, site } from "@/lib/site";
 
-const HERO_IMG = "/seed/hero.svg";
+const HERO_IMG = "/editorial/hero-blue-opal-rough.png";
 
 /** ISR: katalog berubah saat admin publish — revalidasi tiap 30 detik. */
 export const revalidate = 30;
@@ -100,7 +100,7 @@ export default async function HomePage() {
     <>
       {/* 1 · Hero */}
       <section className="relative min-h-[92svh] overflow-hidden">
-        <Image src={HERO_IMG} alt="A cabochon held at the bench" fill priority sizes="100vw" className="object-cover" />
+        <Image src={HERO_IMG} alt="Blue-green rough stone with a broad exposed face and pale host rock on a lapidary workbench" fill preload sizes="100vw" className="object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-ink/45 via-transparent to-ink/10" />
         <div className="relative mx-auto flex min-h-[92svh] max-w-7xl flex-col justify-end px-4 pb-16 sm:px-6 lg:px-12">
           <h1 className="display text-milk text-[clamp(64px,12vw,160px)] leading-[0.95]">
@@ -124,7 +124,7 @@ export default async function HomePage() {
         </div>
         {/* Annotation callouts */}
         <div className="eyebrow absolute right-[6%] top-[22%] hidden rotate-0 text-milk lg:block">
-          <span className="text-gold">01</span> — Laguna agate · 42.6 ct · freeform
+          <span className="text-gold">01</span> — Blue-green opal · rough in matrix
         </div>
         <div className="eyebrow absolute bottom-[38%] right-[12%] hidden text-milk/80 lg:block">
           <span className="text-gold">02</span> — Slabbed, ground & polished at our bench
@@ -218,10 +218,10 @@ export default async function HomePage() {
       <CustomFlow
         steps={CUSTOM_STEPS}
         stages={[
-          { src: "/seed/stage-1-rough.svg", tag: "ROUGH · LAGUNA AGATE" },
-          { src: "/seed/stage-2-preform.svg", tag: "PREFORM · 42.6 CT" },
-          { src: "/seed/stage-3-polish.svg", tag: "POLISHED · 42.6 CT" },
-          { src: "/seed/stage-4-done.svg", tag: "FINISHED · READY" },
+          { src: "/editorial/stage-1-blue-opal-rough.png", tag: "ROUGH · BLUE-GREEN IN MATRIX" },
+          { src: "/editorial/stage-2-blue-opal-sawn.png", tag: "SAWN · COLOUR REVEALED" },
+          { src: "/editorial/stage-3-blue-opal-grinding.png", tag: "SHAPED · AT THE WHEEL" },
+          { src: "/editorial/stage-4-blue-opal-finished.png", tag: "FINISHED · FREEFORM CABOCHON" },
         ]}
       />
 

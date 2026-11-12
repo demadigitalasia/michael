@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand-logo";
 
 /** Menu full-screen gelap untuk mobile — gaya referensi (bg bench, link Antonio besar). */
 export function MobileMenu({ links }: { links: { href: string; label: string }[] }) {
@@ -27,9 +28,7 @@ export function MobileMenu({ links }: { links: { href: string; label: string }[]
           aria-modal="true"
         >
           <div className="flex items-center justify-between">
-            <span className="font-display text-[22px] font-bold uppercase tracking-[0.14em]">
-              MICHAEL LAPIDARY
-            </span>
+            <BrandLogo tone="light" size="large" />
             <button
               onClick={() => setOpen(false)}
               className="flex size-11 items-center justify-center rounded-full border border-milk/30"

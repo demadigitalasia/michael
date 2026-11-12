@@ -1,47 +1,10 @@
-import { randomUUID, scryptSync, randomBytes } from "node:crypto";
-import { mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { scryptSync, randomBytes } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error("DATABASE_URL is not set");
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
-
-// ---------- Placeholder SVG generator (dev only — ganti dengan foto asli via admin) ----------
-const PALETTES: Record<string, string[]> = {
-  agate: ["#b7a48c", "#8d7a63", "#e9e5de"],
-  turquoise: ["#5f9ea0", "#31708e", "#dfe7e4"],
-  labradorite: ["#4a5a6a", "#22303c", "#9fb4c7"],
-  jasper: ["#b05f3c", "#7d3f2a", "#e8d5c4"],
-  opal: ["#a8c3c9", "#6e8f9c", "#eef3f2"],
-  onyx: ["#2b2b2e", "#141416", "#c9c4bb"],
-};
-
-function makeSvg(title: string, kind: string, w = 900, h = 640): string {
-  const [a, b, c] = PALETTES[kind] ?? PALETTES.agate;
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
-  <defs>
-    <radialGradient id="g" cx="38%" cy="34%" r="80%">
-      <stop offset="0%" stop-color="${c}"/>
-      <stop offset="45%" stop-color="${a}"/>
-      <stop offset="100%" stop-color="${b}"/>
-    </radialGradient>
-  </defs>
-  <rect width="${w}" height="${h}" fill="#d8d2c8"/>
-  <ellipse cx="${w / 2}" cy="${h / 2 + 20}" rx="${w * 0.33}" ry="${h * 0.3}" fill="url(#g)"/>
-  <ellipse cx="${w / 2}" cy="${h / 2 + 20}" rx="${w * 0.33}" ry="${h * 0.3}" fill="none" stroke="rgba(18,18,20,.25)"/>
-  <text x="24" y="h-24" y="${h - 26}" font-family="monospace" font-size="22" fill="rgba(18,18,20,.55)" letter-spacing="2">PLACEHOLDER — ${title.toUpperCase()}</text>
-</svg>`;
-}
-
-async function seedImage(title: string, kind: string, slug: string): Promise<{ url: string; alt: string }> {
-  const dir = join(process.cwd(), "public", "seed");
-  mkdirSync(dir, { recursive: true });
-  const file = `${slug}.svg`;
-  writeFileSync(join(dir, file), makeSvg(title, kind), "utf8");
-  return { url: `/seed/${file}`, alt: title };
-}
 
 async function main() {
   // ---------- Admin ----------
@@ -70,123 +33,151 @@ async function main() {
 
   // ---------- Products ----------
   type P = {
-    slug: string; title: string; category: "CABOCHON" | "SLAB" | "ROUGH" | "FINISHED_PIECE";
+    legacySlug: string; slug: string; title: string; category: "CABOCHON" | "SLAB" | "ROUGH" | "FINISHED_PIECE";
     stoneType: string; color: string; form?: string; treatment?: "NATURAL" | "DYED" | "STABILIZED" | "HEAT_TREATED" | "OTHER";
-    origin: string; l?: number; w?: number; d?: number; ct?: number; g?: number; price: number;
-    desc: string; featured?: boolean; palette?: string;
+    origin: string; price: number; desc: string; featured?: boolean; image: string;
   };
   const products: P[] = [
     {
-      slug: "laguna-lace-agate-cabochon-01", title: "Laguna Lace Agate Cabochon", category: "CABOCHON",
-      stoneType: "Laguna agate", color: "Red / cream bands", form: "Freeform", origin: "Chihuahua, Mexico",
-      l: 38, w: 26, d: 7, ct: 42.6, price: 28000, featured: true, palette: "agate",
-      desc: "Tight lace banding in cream and brick red, polished to a mirror on both faces. Cut from slab #014 of a 2024 lot; back is flat and slightly domed for easy bezel work.",
+      legacySlug: "laguna-lace-agate-cabochon-01", slug: "opal-banten-dark-body-cabochon-01",
+      title: "Banten Dark-Body Opal Cabochon", category: "CABOCHON",
+      stoneType: "Banten opal (dark body)", color: "Charcoal brown / localized green-blue play-of-colour",
+      form: "Oval cabochon", treatment: "OTHER", origin: "Lebak, Banten, Indonesia (concept locality; specimen unverified)",
+      price: 28000, featured: true, image: "/products/indonesia/01-opal-banten-dark-body.jpg",
+      desc: "Illustrative AI concept of a dark-body Banten opal with localized play-of-colour. This is not an exact inventory specimen; verify provenance, treatment, dimensions, weight, and price against physical stock before sale.",
     },
     {
-      slug: "kingman-turquoise-cabochon-01", title: "Kingman Turquoise Cabochon", category: "CABOCHON",
-      stoneType: "Turquoise", color: "Sky blue / matrix", form: "Oval", treatment: "STABILIZED", origin: "Kingman, Arizona, USA",
-      l: 24, w: 18, d: 6, ct: 18.2, price: 14500,
-      desc: "Even sky blue with a fine spiderweb of golden matrix. Stabilized for durability — disclosed plainly, as with everything we sell.",
+      legacySlug: "kingman-turquoise-cabochon-01", slug: "opal-banten-pale-body-cabochon-01",
+      title: "Banten Pale-Body Opal Cabochon", category: "CABOCHON",
+      stoneType: "Banten opal (pale body)", color: "Cream / pale honey with localized play-of-colour",
+      form: "Freeform cabochon", treatment: "OTHER", origin: "Lebak, Banten, Indonesia (concept locality; specimen unverified)",
+      price: 14500, image: "/products/indonesia/02-opal-banten-pale-body.jpg",
+      desc: "Illustrative AI concept of pale-body Banten opal with subtle, localized colour patches. This is not an exact inventory specimen; verify provenance, treatment, dimensions, weight, and price against physical stock before sale.",
     },
     {
-      slug: "labradorite-cabochon-01", title: "Labradorite Cabochon — Full Flash", category: "CABOCHON",
-      stoneType: "Labradorite", color: "Blue-green flash", form: "Round", origin: "Tabor, Madagascar",
-      l: 30, w: 30, d: 8, ct: 51.4, price: 19000,
-      desc: "Oriented for a full-face electric blue flash that fills the stone at 15°. Dark field, clean polish, no pits.",
+      legacySlug: "labradorite-cabochon-01", slug: "garut-blue-green-opal-wood-rough-01",
+      title: "Garut Blue-Green Opal in Silicified Wood — Rough", category: "ROUGH",
+      stoneType: "Blue-green common opal / silicified wood", color: "Blue-green opal / cream, tan, and brown matrix",
+      form: "Rough cut-face specimen", treatment: "OTHER", origin: "Garut, West Java, Indonesia (concept locality; specimen unverified)",
+      price: 19000, image: "/products/indonesia/03-blue-green-opal-garut-silicified-wood.jpg",
+      desc: "Illustrative AI concept based on the user's blue-green boulder reference and reported Garut opal-bearing silicified wood. This is not the pictured specimen; verify provenance, treatment, dimensions, weight, and price against physical stock before sale.",
     },
     {
-      slug: "ocean-jasper-cabochon-01", title: "Ocean Jasper Cabochon", category: "CABOCHON",
-      stoneType: "Ocean jasper", color: "Green orbs", form: "Trillion", origin: "Marovato, Madagascar",
-      l: 27, w: 24, d: 6, ct: 22.8, price: 16500,
-      desc: "Druzy orbs floating in green gel — the classic 2000s-vein material. One tiny druzy cave on the edge, photographed.",
+      legacySlug: "ocean-jasper-cabochon-01", slug: "bacan-chrysocolla-quartz-cabochon-01",
+      title: "Bacan Chrysocolla Quartz Cabochon", category: "CABOCHON",
+      stoneType: "Chrysocolla-bearing quartz / chalcedony", color: "Sky blue to blue-green mottled",
+      form: "Oval cabochon", treatment: "OTHER", origin: "Kasiruta, South Halmahera, North Maluku, Indonesia (concept locality; specimen unverified)",
+      price: 16500, image: "/products/indonesia/04-bacan-chrysocolla-quartz.jpg",
+      desc: "Illustrative AI concept of blue-to-blue-green Bacan chrysocolla-bearing quartz with natural mottling. This is not an exact inventory specimen; verify provenance, treatment, dimensions, weight, and price against physical stock before sale.",
     },
     {
-      slug: "picture-jasper-slab-01", title: "Picture Jasper Slab", category: "SLAB",
-      stoneType: "Picture jasper", color: "Tan / brown landscape", origin: "Owyhee, Oregon, USA",
-      l: 120, w: 80, d: 7, g: 210, price: 12000,
-      desc: "A landscape in stone: layered hills and sky, ready for cabbing or display. Both faces polished flat for preview.",
+      legacySlug: "picture-jasper-slab-01", slug: "ciremai-bumble-bee-stone-cabochon-01",
+      title: "Ciremai Bumble Bee Stone Cabochon", category: "CABOCHON",
+      stoneType: "Bumble Bee Stone (carbonate-rich material)", color: "Yellow / orange / black / gray",
+      form: "Freeform cabochon", treatment: "OTHER", origin: "Ciremai–Kuningan, West Java, Indonesia (concept locality; specimen unverified)",
+      price: 12000, image: "/products/indonesia/05-bumble-bee-stone-ciremai.jpg",
+      desc: "Illustrative AI concept of opaque yellow-orange-black Bumble Bee Stone, a carbonate-rich gem material rather than jasper. This is not an exact inventory specimen; verify provenance, treatment, dimensions, weight, and price against physical stock before sale.",
     },
     {
-      slug: "laguna-agate-slab-01", title: "Laguna Agate Slab", category: "SLAB",
-      stoneType: "Laguna agate", color: "Red / white banding", origin: "Chihuahua, Mexico",
-      l: 95, w: 60, d: 6, g: 118, price: 9500,
-      desc: "Tight tube and band structure across the full face. Enough for two mid-size cabs or one large freeform.",
+      legacySlug: "laguna-agate-slab-01", slug: "garut-red-jasper-cabochon-01",
+      title: "Southern Java Red Jasper Cabochon", category: "CABOCHON",
+      stoneType: "Red jasper", color: "Brick red to reddish brown",
+      form: "Oval cabochon", treatment: "OTHER", origin: "Bungbulang, Garut, West Java, Indonesia (concept locality; specimen unverified)",
+      price: 9500, image: "/products/indonesia/06-red-jasper-garut.jpg",
+      desc: "Illustrative AI concept of opaque brick-red southern Java jasper with subtle earthy variation. This is not an exact inventory specimen; verify provenance, treatment, dimensions, weight, and price against physical stock before sale.",
     },
     {
-      slug: "botswana-agate-slab-01", title: "Botswana Agate Slab", category: "SLAB",
-      stoneType: "Botswana agate", color: "Grey / pink bands", origin: "Botswana",
-      l: 85, w: 55, d: 6, g: 92, price: 7500,
-      desc: "Fine, even banding in smoke and blush. No cracks, no filler — checked under the loupe.",
+      legacySlug: "botswana-agate-slab-01", slug: "garut-pancawarna-jasper-cabochon-01",
+      title: "Garut Pancawarna Jasper Cabochon", category: "CABOCHON",
+      stoneType: "Pancawarna jasper (trade name)", color: "Red / yellow / orange / green / brown / cream",
+      form: "Freeform cabochon", treatment: "OTHER", origin: "Bungbulang, Garut, West Java, Indonesia (concept locality; specimen unverified)",
+      price: 7500, image: "/products/indonesia/07-pancawarna-jasper-garut.jpg",
+      desc: "Illustrative AI concept of opaque multicolour jasper with irregular natural colour fields. This is not an exact inventory specimen; verify provenance, treatment, dimensions, weight, and price against physical stock before sale.",
     },
     {
-      slug: "moroccan-seam-agate-rough-01", title: "Moroccan Seam Agate Rough — 1.2 kg lot", category: "ROUGH",
-      stoneType: "Seam agate", color: "Grey / white", origin: "Kerrouchen, Morocco",
-      g: 1200, price: 6500,
-      desc: "One kilo-plus lot of fresh seam agate, pressure-washed and graded. Good banding on at least a third of the pieces, from experience with this lot.",
+      legacySlug: "moroccan-seam-agate-rough-01", slug: "manakarra-quartz-cluster-01",
+      title: "Manakarra Botryoidal Quartz Cluster", category: "ROUGH",
+      stoneType: "Manakarra quartz", color: "Lavender / amethyst purple / pale gray-green",
+      form: "Botryoidal quartz cluster", treatment: "OTHER", origin: "Mamuju, West Sulawesi, Indonesia (concept locality; specimen unverified)",
+      price: 6500, image: "/products/indonesia/08-manakarra-quartz-mamuju.jpg",
+      desc: "Illustrative AI concept of the grape-like botryoidal quartz sold as Manakarra; it is not presented as true agate. This is not an exact inventory specimen; verify provenance, treatment, dimensions, weight, and price against physical stock before sale.",
     },
     {
-      slug: "coconut-geode-rough-01", title: "Coconut Geode Rough — pair lot", category: "ROUGH",
-      stoneType: "Coconut geode", color: "Grey exterior", origin: "Chihuahua, Mexico",
-      g: 2400, price: 8500,
-      desc: "Two uncracked geodes from the same pocket. Sold as a pair — crack one open to find out together.",
+      legacySlug: "coconut-geode-rough-01", slug: "indonesian-silicified-coral-slab-01",
+      title: "Indonesian Silicified Coral Cross-Section", category: "SLAB",
+      stoneType: "Silicified coral", color: "Reddish brown / muted orange / cream / dark gray",
+      form: "Polished cross-section", treatment: "OTHER", origin: "Indonesia (concept visual; specimen locality unverified)",
+      price: 8500, image: "/products/indonesia/09-silicified-coral-indonesia.jpg",
+      desc: "Illustrative AI concept of silicified coral with radial and branching fossil patterns. This is not an exact inventory specimen; verify locality, treatment, dimensions, weight, and price against physical stock before sale.",
     },
     {
-      slug: "laguna-agate-pendant-01", title: "Laguna Agate Pendant — Sterling", category: "FINISHED_PIECE",
-      stoneType: "Laguna agate", color: "Red / cream", origin: "Cut & set at our bench",
-      l: 45, w: 22, d: 9, ct: 30.1, price: 22000,
-      desc: "One of our cabochons, bezel-set in sterling silver with a hand-formed bail. Chain not included; 18\" chains sold separately.",
+      legacySlug: "laguna-agate-pendant-01", slug: "sumatra-drusy-petrified-wood-slab-01",
+      title: "Sumatra Silicified Wood with Drusy Quartz", category: "SLAB",
+      stoneType: "Silicified wood with drusy quartz", color: "Natural gray-white banding / brown wood matrix",
+      form: "Polished slice with drusy pocket", treatment: "OTHER", origin: "Sumatra, Indonesia (concept locality; specimen unverified)",
+      price: 22000, image: "/products/indonesia/10-sumatra-drusy-petrified-wood.jpg",
+      desc: "Illustrative AI concept of silicified wood with a small pocket lined by drusy quartz. This is not an exact inventory specimen; verify locality, treatment, dimensions, weight, and price against physical stock before sale.",
     },
     {
-      slug: "worry-carving-onyx-01", title: "Black Onyx Worry Stone — Carved", category: "FINISHED_PIECE",
-      stoneType: "Black onyx", color: "Jet", form: "Palm", origin: "Carved at our bench",
-      l: 52, w: 34, d: 12, g: 88, price: 9500,
-      desc: "Hand-carved palm stone with a thumb groove worn smooth. A quiet piece for a desk or pocket.",
+      legacySlug: "worry-carving-onyx-01", slug: "gorontalo-silicified-wood-slice-01",
+      title: "Gorontalo Silicified Fossil Wood Slice", category: "FINISHED_PIECE",
+      stoneType: "Silicified fossil wood", color: "Cream / warm gray / muted brown",
+      form: "Polished slice", treatment: "OTHER", origin: "Tohupo–Molannihu, Gorontalo, Indonesia (concept locality; specimen unverified)",
+      price: 9500, image: "/products/indonesia/11-gorontalo-silicified-wood.jpg",
+      desc: "Illustrative AI concept of polished silicified wood with preserved wood fibres. The visual does not add blue opal or play-of-colour. This is not an exact inventory specimen; verify provenance, treatment, dimensions, weight, and price against physical stock before sale.",
     },
     {
-      slug: "matched-pair-ocean-jasper-01", title: "Matched Pair — Ocean Jasper Cabs", category: "FINISHED_PIECE",
-      stoneType: "Ocean jasper", color: "Pink / green orbs", form: "Oval pair", origin: "Cut from one slab",
-      l: 16, w: 12, d: 4, ct: 11.9, price: 14000,
-      desc: "Two cabs cut from adjacent positions on the same slab — orbs line up across the pair. Made for earrings.",
+      legacySlug: "matched-pair-ocean-jasper-01", slug: "lebak-banten-silicified-wood-slice-01",
+      title: "Lebak Banten Silicified Fossil Wood Slice", category: "FINISHED_PIECE",
+      stoneType: "Quartz-bearing silicified wood", color: "Tan / pale gray / cream / brown",
+      form: "Polished freeform slice", treatment: "OTHER", origin: "Sajira, Lebak, Banten, Indonesia (concept locality; specimen unverified)",
+      price: 14000, image: "/products/indonesia/12-lebak-banten-silicified-wood.jpg",
+      desc: "Illustrative AI concept of quartz-bearing silicified fossil wood with visible growth structure. It is not labelled as opal and has no play-of-colour. This is not an exact inventory specimen; verify provenance, treatment, dimensions, weight, and price against physical stock before sale.",
     },
   ];
 
   for (const p of products) {
-    const img = await seedImage(p.title, p.palette ?? "agate", p.slug);
-    await prisma.product.upsert({
-      where: { slug: p.slug },
-      update: {},
-      create: {
-        slug: p.slug,
+    const data = {
         title: p.title,
         description: p.desc,
         category: p.category,
         stoneType: p.stoneType,
         color: p.color,
         form: p.form ?? "",
-        treatment: p.treatment ?? "NATURAL",
+        treatment: p.treatment ?? "OTHER" as const,
         origin: p.origin,
-        lengthMm: p.l, widthMm: p.w, depthMm: p.d,
-        weightCarat: p.ct, weightGram: p.g,
+        lengthMm: null, widthMm: null, depthMm: null,
+        weightCarat: null, weightGram: null,
         priceCents: p.price,
-        status: "AVAILABLE",
         featured: p.featured ?? false,
-        publishedAt: new Date(),
-        images: {
-          create: [
-            { url: img.url, alt: `${p.title} — front`, sortOrder: 0, isPrimary: true },
-            { url: img.url, alt: `${p.title} — detail`, sortOrder: 1 },
-          ],
-        },
-      },
+        slug: p.slug,
+    };
+    const images = {
+      deleteMany: {},
+      create: [
+        { url: p.image, alt: `AI concept image of ${p.stoneType}; not the exact specimen`, sortOrder: 0, isPrimary: true },
+        { url: p.image, alt: `AI concept detail of ${p.stoneType}; not the exact specimen`, sortOrder: 1, isPrimary: false },
+      ],
+    };
+    const existing = await prisma.product.findFirst({
+      where: { OR: [{ slug: p.slug }, { slug: p.legacySlug }] },
+      select: { id: true },
     });
+    if (existing) {
+      await prisma.product.update({ where: { id: existing.id }, data: { ...data, images } });
+    } else {
+      await prisma.product.create({
+        data: { ...data, status: "AVAILABLE", publishedAt: new Date(), images: { create: images.create } },
+      });
+    }
   }
   console.log(`✔ ${products.length} products`);
 
   // ---------- Reviews ----------
   const reviews = [
-    { author: "Hana O.", location: "Leeds", quote: "It arrived with a photo of the stone on the wheel, half polished. I have never felt so involved in something I bought.", productName: "Laguna Lace Agate Cabochon" },
-    { author: "Tom & Priya", location: "Bristol", quote: "The measurements were exact to the tenth of a millimetre. Both cabs sit flush in the bezels we made.", productName: "Matched Pair — Ocean Jasper" },
-    { author: "Ines M.", location: "Lisbon", quote: "Third order this year. The treatment notes are more honest than anyone else I buy from.", productName: "Kingman Turquoise Cabochon" },
+    { author: "Hana O.", location: "Leeds", quote: "It arrived with a photo of the stone on the wheel, half polished. I have never felt so involved in something I bought.", productName: "Banten Opal Cabochon" },
+    { author: "Tom & Priya", location: "Bristol", quote: "The measurements were exact to the tenth of a millimetre. Both cabs sit flush in the bezels we made.", productName: "Bacan Chrysocolla Quartz Cabochons" },
+    { author: "Ines M.", location: "Lisbon", quote: "Third order this year. The treatment notes are more honest than anyone else I buy from.", productName: "Garut Red Jasper Cabochon" },
   ];
   for (const r of reviews) await prisma.review.create({ data: r });
   console.log(`✔ ${reviews.length} reviews`);

@@ -1,7 +1,7 @@
 import { MobileMenu } from "@/components/mobile-menu";
 import { CartBadge } from "@/components/cart-badge";
+import { BrandLogo } from "@/components/brand-logo";
 import Link from "next/link";
-import { site } from "@/lib/site";
 
 const links = [
   { href: "/shop", label: "Shop" },
@@ -21,11 +21,10 @@ export function SiteHeader() {
     <header className="fixed inset-x-0 top-0 z-50 flex items-center justify-between gap-2 px-4 pt-4 sm:px-6">
       <Link
         href="/"
-        className="flex h-11 items-center rounded-full border border-white/55 bg-[rgba(240,237,231,0.7)] px-5 backdrop-blur-[18px] transition-colors duration-200 hover:border-ink/30"
+        aria-label="Michael Lapidary home"
+        className="flex h-11 items-center rounded-full border border-white/55 bg-[rgba(240,237,231,0.7)] px-3.5 backdrop-blur-[18px] transition-colors duration-200 hover:border-ink/30"
       >
-        <span className="font-display text-[22px] font-bold uppercase leading-none tracking-[0.14em] text-ink">
-          {site.shortName}
-        </span>
+        <BrandLogo />
       </Link>
 
       <nav

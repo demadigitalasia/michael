@@ -9,7 +9,11 @@ export async function sendMail({ to, subject, html }: { to: string; subject: str
     return;
   }
   const from = process.env.EMAIL_FROM ?? "Michael Lapidary <onboarding@resend.dev>";
-  await resend.emails.send({ from, to, subject, html });
+  try {
+    await resend.emails.send({ from, to, subject, html });
+  } catch (e) {
+    console.error(`[mail:error] to=${to} subject="${subject}"`, e);
+  }
 }
 
 export function orderConfirmationHtml(opts: {
