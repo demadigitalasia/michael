@@ -120,8 +120,10 @@ export function CustomFlow({
                 <Image src={st.src} alt={st.tag} fill sizes="(min-width:1024px) 58vw, 100vw" className="object-cover" />
               </div>
             ))}
-            <span className="eyebrow absolute left-[18px] top-4 text-ink/60">
-              {stages[Math.min(step, stages.length - 1)]?.tag}
+            <span className="eyebrow absolute left-[18px] top-4">
+              <span className="inline-block rounded-[4px] bg-ink/45 px-3 py-2 text-milk backdrop-blur-[4px]">
+                {stages[Math.min(step, stages.length - 1)]?.tag}
+              </span>
             </span>
             <span className="eyebrow absolute bottom-3 right-4 opacity-55 text-ink">
               MICHAEL LAPIDARY · CUSTOM 0419 · SHEET 2 OF 2

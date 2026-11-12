@@ -16,7 +16,7 @@ export function Loupe({ src, alt, sizes }: { src: string; alt: string; sizes: st
   return (
     <div
       ref={frameRef}
-      className="relative aspect-[4/3] w-full cursor-crosshair overflow-hidden rounded-[4px] bg-phold"
+      className="relative h-full w-full cursor-crosshair overflow-hidden rounded-[4px] bg-phold"
       onMouseEnter={(e) => {
         if (e.nativeEvent instanceof MouseEvent && matchMedia("(pointer: fine)").matches) setActive(true);
       }}
