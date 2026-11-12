@@ -7,7 +7,7 @@ import { z } from "zod";
 
 const schema = z.object({
   id: z.string().uuid(),
-  status: z.enum(["PAID", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"]),
+  status: z.enum(["PENDING", "PAID", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"]),
   trackingNumber: z.string().max(100).optional().default(""),
   courier: z.string().max(100).optional().default(""),
 });
@@ -17,11 +17,24 @@ export async function PUT(req: Request) {
     await requireAdmin();
     const data = schema.parse(await req.json());
 
-    const before = await prisma.order.findUnique({ where: { id: data.id } });
+    const before = await prisma.order.findUnique({
+      where: { id: data.id },
+      include: { items: { select: { productId: true } } },
+    });
     const order = await prisma.order.update({
       where: { id: data.id },
       data: { status: data.status, trackingNumber: data.trackingNumber || null, courier: data.courier || null },
     });
+
+    // Batal → lepas reservasi produk yang masih RESERVED (PRD §6.3)
+    if (before && before.status !== "CANCELLED" && data.status === "CANCELLED") {
+      for (const item of before.items) {
+        await prisma.product.updateMany({
+          where: { id: item.productId, status: "RESERVED" },
+          data: { status: "AVAILABLE", reservedUntil: null },
+        });
+      }
+    }
 
     // Transisi ke SHIPPED → kirim email tracking (sekali saja)
     if (before?.status !== "SHIPPED" && data.status === "SHIPPED" && data.trackingNumber) {

@@ -38,7 +38,7 @@ export function OrderControls({
   return (
     <div className="flex flex-wrap items-center gap-2">
       <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className={field}>
-        {["PAID", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"].map((s) => (
+        {["PENDING", "PAID", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"].map((s) => (
           <option key={s} value={s}>{s}</option>
         ))}
       </select>
