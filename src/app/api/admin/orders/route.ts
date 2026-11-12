@@ -1,0 +1,40 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth";
+import { sendMail, shippedHtml } from "@/lib/mail";
+import { site } from "@/lib/site";
+import { z } from "zod";
+
+const schema = z.object({
+  id: z.string().uuid(),
+  status: z.enum(["PAID", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"]),
+  trackingNumber: z.string().max(100).optional().default(""),
+  courier: z.string().max(100).optional().default(""),
+});
+
+export async function PUT(req: Request) {
+  try {
+    await requireAdmin();
+    const data = schema.parse(await req.json());
+
+    const before = await prisma.order.findUnique({ where: { id: data.id } });
+    const order = await prisma.order.update({
+      where: { id: data.id },
+      data: { status: data.status, trackingNumber: data.trackingNumber || null, courier: data.courier || null },
+    });
+
+    // Transisi ke SHIPPED → kirim email tracking (sekali saja)
+    if (before?.status !== "SHIPPED" && data.status === "SHIPPED" && data.trackingNumber) {
+      await sendMail({
+        to: order.email,
+        subject: `Order ${order.orderNumber} shipped — tracking inside`,
+        html: shippedHtml({ orderNumber: order.orderNumber, trackingNumber: data.trackingNumber, courier: data.courier || "the courier", siteUrl: site.url }),
+      }).catch(() => undefined);
+    }
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    if (e instanceof z.ZodError) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+    if (e instanceof Error && e.message === "UNAUTHORIZED") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Update failed" }, { status: 500 });
+  }
+}

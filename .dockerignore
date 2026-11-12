@@ -1,0 +1,11 @@
+node_modules
+.next
+uploads
+.git
+.video_agent
+docs
+*.md
+.env*
+!.env.example
+Dockerfile
+.dockerignore

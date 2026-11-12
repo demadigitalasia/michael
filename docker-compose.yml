@@ -1,0 +1,22 @@
+# Local development Postgres (production: Postgres service di Coolify / VPS)
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: ml-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: michael
+      POSTGRES_PASSWORD: lapidary_dev
+      POSTGRES_DB: michael_lapidary
+    ports:
+      - "5433:5432"
+    volumes:
+      - ml_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U michael -d michael_lapidary"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  ml_pgdata:

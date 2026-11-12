@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="640" viewBox="0 0 900 640">
+  <defs>
+    <radialGradient id="g" cx="38%" cy="34%" r="80%">
+      <stop offset="0%" stop-color="#e9e5de"/>
+      <stop offset="45%" stop-color="#b7a48c"/>
+      <stop offset="100%" stop-color="#8d7a63"/>
+    </radialGradient>
+  </defs>
+  <rect width="900" height="640" fill="#d8d2c8"/>
+  <ellipse cx="450" cy="340" rx="297" ry="192" fill="url(#g)"/>
+  <ellipse cx="450" cy="340" rx="297" ry="192" fill="none" stroke="rgba(18,18,20,.25)"/>
+  <text x="24" y="h-24" y="614" font-family="monospace" font-size="22" fill="rgba(18,18,20,.55)" letter-spacing="2">PLACEHOLDER — LAGUNA LACE AGATE CABOCHON</text>
+</svg>

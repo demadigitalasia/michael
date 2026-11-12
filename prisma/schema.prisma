@@ -1,0 +1,201 @@
+// Michael Lapidary — schema (PRD.md §11, revisi: + reviews, shippingRates, featured)
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Category {
+  CABOCHON
+  SLAB
+  ROUGH
+  FINISHED_PIECE
+}
+
+enum Treatment {
+  NATURAL
+  DYED
+  STABILIZED
+  HEAT_TREATED
+  OTHER
+}
+
+enum ProductStatus {
+  DRAFT
+  AVAILABLE
+  RESERVED
+  SOLD
+  HIDDEN
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum CustomServiceType {
+  PENDANT
+  PAIR
+  CARVING
+  INTARSIA
+  OTHER
+}
+
+enum CustomOrderStatus {
+  NEW
+  QUOTED
+  IN_PROGRESS
+  COMPLETED
+  DECLINED
+}
+
+model Product {
+  id           String        @id @default(uuid()) @db.Uuid
+  slug         String        @unique
+  title        String
+  description  String
+  category     Category
+  stoneType    String
+  color        String        @default("")
+  form         String        @default("") // oval, round, freeform, ... (cabochon)
+  treatment    Treatment     @default(NATURAL)
+  origin       String        @default("")
+  lengthMm     Float?
+  widthMm      Float?
+  depthMm      Float?
+  weightCarat  Float?
+  weightGram   Float?
+  priceCents   Int
+  quantity     Int           @default(1)
+  status       ProductStatus @default(DRAFT)
+  featured     Boolean       @default(false)
+  reservedUntil DateTime?
+  publishedAt  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  images   ProductImage[]
+  cartItems CartItem[]
+  orderItems OrderItem[]
+
+  @@index([status, category])
+  @@index([publishedAt])
+}
+
+model ProductImage {
+  id        String  @id @default(uuid()) @db.Uuid
+  productId String  @db.Uuid
+  url       String
+  alt       String  @default("")
+  sortOrder Int     @default(0)
+  isPrimary Boolean @default(false)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model Cart {
+  id        String   @id @default(uuid()) @db.Uuid
+  token     String   @unique
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  items CartItem[]
+}
+
+model CartItem {
+  id        String   @id @default(uuid()) @db.Uuid
+  cartId    String   @db.Uuid
+  productId String   @db.Uuid
+  addedAt   DateTime @default(now())
+
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([cartId, productId])
+}
+
+model Order {
+  id                    String      @id @default(uuid()) @db.Uuid
+  orderNumber           String      @unique
+  email                 String
+  status                OrderStatus @default(PENDING)
+  subtotalCents         Int
+  shippingCents         Int
+  totalCents            Int
+  shippingAddress       Json
+  trackingNumber        String?
+  courier               String?
+  stripePaymentIntentId String?     @unique
+  placedAt              DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  items OrderItem[]
+}
+
+model OrderItem {
+  id                     String @id @default(uuid()) @db.Uuid
+  orderId                String @db.Uuid
+  productId              String @db.Uuid
+  productTitleSnapshot   String
+  productSlugSnapshot    String
+  priceCents             Int
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+}
+
+model CustomOrder {
+  id              String             @id @default(uuid()) @db.Uuid
+  name            String
+  email           String
+  serviceType     CustomServiceType
+  description     String
+  budgetUsd       Float?
+  timeline        String             @default("")
+  referenceImages Json?
+  status          CustomOrderStatus  @default(NEW)
+  adminNotes      String             @default("")
+  createdAt       DateTime           @default(now())
+
+  @@index([status, createdAt])
+}
+
+model AdminUser {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  passwordHash String
+  name         String   @default("")
+  createdAt    DateTime @default(now())
+}
+
+model Review {
+  id          String   @id @default(uuid()) @db.Uuid
+  author      String
+  location    String   @default("")
+  quote       String
+  productName String   @default("")
+  rating      Float    @default(5)
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model ShippingRate {
+  id          String  @id @default(uuid()) @db.Uuid
+  zone        String  // "Domestic", "Canada", "Europe", "UK", "Australia/NZ", "Rest of world"
+  name        String
+  minWeightG  Float   @default(0)
+  maxWeightG  Float   @default(2000)
+  priceCents  Int
+  active      Boolean @default(true)
+}

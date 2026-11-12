@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+/* =========================================================
+   Michael Lapidary — design tokens (DESIGN-SPEC.md §3)
+   Nama asli template: paper/ink/bench/stone/gold/oxide
+   ========================================================= */
+@theme {
+  --color-paper: #e9e5de; /* background utama */
+  --color-milk: #ece8e1; /* teks di atas section gelap */
+  --color-ink: #121214; /* teks utama & section gelap */
+  --color-bench: #141415; /* varian background gelap */
+  --color-stone: #bdb8af; /* border, muted */
+  --color-gold: #c9a24e; /* aksen utama */
+  --color-oxide: #d9482b; /* aksen status (sold, counter suffix) */
+  --color-sketch: #f2efe9; /* lembar sketsa (custom flow stage) */
+  --color-phold: #d8d2c8; /* placeholder foto */
+
+  --font-display: var(--font-antonio), "Arial Narrow", sans-serif;
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, Menlo, monospace;
+
+  --ease-out-jw: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Base */
+html {
+  scroll-behavior: smooth;
+}
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+::selection {
+  background: var(--color-gold);
+  color: var(--color-ink);
+}
+:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+/* Teks di atas gelap = 72% alpha (MOTION-SPEC §1) */
+.body-muted {
+  color: color-mix(in srgb, var(--color-ink) 72%, transparent);
+}
+.body-muted-dark {
+  color: color-mix(in srgb, var(--color-milk) 72%, transparent);
+}
+
+/* Eyebrow mono: 11px uppercase ls .07em */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+/* Display heading: Antonio uppercase */
+.display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 0.88;
+  letter-spacing: -0.005em;
+}
+
+/* Judul produk = Geist 500 17px (BUKAN Antonio — preset asli) */
+.product-title {
+  font-family: var(--font-sans);
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+/* Ticker (JwTicker port — MOTION-SPEC §2.1) */
+.jw-ticker {
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+.jw-ticker .jw-tr {
+  display: flex;
+  width: max-content;
+  animation: jwTick 42.35s linear infinite;
+}
+.jw-ticker:hover .jw-tr {
+  animation-play-state: paused;
+}
+@keyframes jwTick {
+  to {
+    transform: translateX(-50%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .jw-ticker .jw-tr {
+    animation: none;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}
