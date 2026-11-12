@@ -21,6 +21,8 @@ const base = z.object({
   priceCents: z.number().int().min(0),
   status: z.enum(["DRAFT", "AVAILABLE", "RESERVED", "SOLD", "HIDDEN"]),
   featured: z.boolean().default(false),
+  metaTitle: z.string().max(70).default(""),
+  metaDescription: z.string().max(160).default(""),
   images: z.array(z.object({ url: z.string(), alt: z.string().default("") })).min(1),
 });
 
@@ -50,6 +52,8 @@ function parseForm(fd: FormData) {
     priceCents: Math.round(Number(fd.get("priceUsd") ?? 0) * 100),
     status: fd.get("status") ?? "DRAFT",
     featured: fd.get("featured") === "on",
+    metaTitle: String(fd.get("metaTitle") ?? "").trim(),
+    metaDescription: String(fd.get("metaDescription") ?? "").trim(),
     images: JSON.parse(String(fd.get("images") ?? "[]")),
   });
 }

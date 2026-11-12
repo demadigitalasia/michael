@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Antonio, Geist, Geist_Mono } from "next/font/google";
+import { getSettings } from "@/lib/settings";
+import { site } from "@/lib/site";
 import "./globals.css";
 
 const antonio = Antonio({
@@ -25,20 +27,34 @@ const geistMono = Geist_Mono({
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
-export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
-  title: {
-    default: "Michael Lapidary · One stone at a time",
-    template: "%s · Michael Lapidary",
-  },
-  description:
-    "Cabochons, slabs and rough cut by hand from semi-precious stone. Custom pendants, matched pairs, carvings and intarsia — cut at our bench, shipped insured worldwide.",
-  openGraph: {
-    type: "website",
-    siteName: "Michael Lapidary",
-    url: siteUrl,
-  },
-};
+/** Metadata global — kini dikontrol dari admin Settings (fallback ke nilai default). */
+export async function generateMetadata(): Promise<Metadata> {
+  const s = await getSettings();
+  const title = s.metaTitle || "Michael Lapidary · One stone at a time";
+  const description =
+    s.metaDescription ||
+    "Cabochons, slabs and rough cut by hand from semi-precious stone. Custom pendants, matched pairs, carvings and intarsia — cut at our bench, shipped insured worldwide.";
+
+  return {
+    metadataBase: new URL(siteUrl),
+    title: {
+      default: title,
+      template: "%s · Michael Lapidary",
+    },
+    description,
+    openGraph: {
+      type: "website",
+      siteName: site.name,
+      url: siteUrl,
+      title,
+      description,
+      images: s.ogImageUrl ? [{ url: s.ogImageUrl }] : undefined,
+    },
+    verification: s.googleSiteVerification
+      ? { google: s.googleSiteVerification }
+      : undefined,
+  };
+}
 
 export default function RootLayout({
   children,

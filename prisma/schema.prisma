@@ -76,6 +76,8 @@ model Product {
   quantity     Int           @default(1)
   status       ProductStatus @default(DRAFT)
   featured     Boolean       @default(false)
+  metaTitle    String        @default("") // SEO opsional — kosong = dari judul
+  metaDescription String     @default("") // SEO opsional — kosong = dari deskripsi
   reservedUntil DateTime?
   publishedAt  DateTime?
   createdAt    DateTime      @default(now())
@@ -198,4 +200,15 @@ model ShippingRate {
   maxWeightG  Float   @default(2000)
   priceCents  Int
   active      Boolean @default(true)
+}
+
+/// Pengaturan situs single-row (SEO global, sosial) — diedit dari admin Settings
+model SiteSettings {
+  id                      String   @id @default("singleton")
+  metaTitle               String   @default("") // default tab title
+  metaDescription         String   @default("") // default description
+  ogImageUrl              String   @default("") // thumbnail share WA/IG/FB
+  googleSiteVerification  String   @default("") // Search Console meta content
+  instagramUrl            String   @default("") // JSON-LD Organization sameAs
+  updatedAt               DateTime @updatedAt
 }

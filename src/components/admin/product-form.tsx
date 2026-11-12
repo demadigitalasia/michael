@@ -10,6 +10,7 @@ export type AdminProduct = {
   lengthMm: number | null; widthMm: number | null; depthMm: number | null;
   weightCarat: number | null; weightGram: number | null;
   priceCents: number; status: string; featured: boolean;
+  metaTitle: string; metaDescription: string;
   images: { url: string; alt: string }[];
 };
 
@@ -146,6 +147,17 @@ export function ProductForm({ product }: { product?: AdminProduct }) {
           <input type="checkbox" name="featured" defaultChecked={product?.featured} className="size-4 accent-[#121214]" />
           <span className="text-[14px] text-ink">Featured on homepage</span>
         </label>
+        <div className="grid gap-4 border-t border-ink/10 pt-4">
+          <p className="eyebrow text-ink/60">SEO (opsional — kosongkan untuk otomatis)</p>
+          <label className="grid gap-1.5">
+            <span className={label}>Meta title (maks 60)</span>
+            <input name="metaTitle" maxLength={60} defaultValue={product?.metaTitle ?? ""} placeholder={product?.title ?? ""} className={field} />
+          </label>
+          <label className="grid gap-1.5">
+            <span className={label}>Meta description (maks 160)</span>
+            <textarea name="metaDescription" maxLength={160} rows={2} defaultValue={product?.metaDescription ?? ""} className="rounded-[4px] border border-ink/20 bg-transparent p-3 text-[14px] leading-relaxed text-ink focus:outline-none focus:ring-1 focus:ring-gold" />
+          </label>
+        </div>
       </div>
 
       {/* Foto */}

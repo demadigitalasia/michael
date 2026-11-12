@@ -20,9 +20,18 @@ export async function generateMetadata({
   const { slug } = await params;
   const p = await getProductBySlug(slug);
   if (!p) return { title: "Not found" };
+  const title = p.metaTitle || p.title;
+  const description = p.metaDescription || p.description.slice(0, 155);
+  const ogImg = p.images[0]?.url;
   return {
-    title: p.title,
-    description: p.description.slice(0, 155),
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: ogImg ? [{ url: ogImg }] : undefined,
+      type: "website",
+    },
   };
 }
 

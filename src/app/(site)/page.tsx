@@ -10,6 +10,7 @@ import { Ticker } from "@/components/ticker";
 import { StatusBadge } from "@/components/status-badge";
 import { countByCategory, getFeatured, listProducts } from "@/lib/products";
 import { prisma } from "@/lib/prisma";
+import { getSettings } from "@/lib/settings";
 import { categories, formatUsd, site } from "@/lib/site";
 
 const HERO_IMG = "/editorial/hero-blue-opal-rough.png";
@@ -84,12 +85,22 @@ const CARE_ITEMS = [
 ];
 
 export default async function HomePage() {
-  const [featured, latest, counts, reviews] = await Promise.all([
+  const [featured, latest, counts, reviews, settings] = await Promise.all([
     getFeatured(),
     listProducts({ limit: 8 }),
     countByCategory(),
     prisma.review.findMany({ where: { published: true }, orderBy: { createdAt: "asc" } }),
+    getSettings(),
   ]);
+
+  const orgJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: site.name,
+    url: site.url,
+    description: settings.metaDescription || site.description,
+    ...(settings.instagramUrl ? { sameAs: [settings.instagramUrl] } : {}),
+  };
 
   const lookbookPhotos = latest.slice(0, 8).map((p) => ({
     src: p.images[0]?.url ?? HERO_IMG,
@@ -98,6 +109,7 @@ export default async function HomePage() {
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
       {/* 1 · Hero */}
       <section className="relative min-h-[92svh] overflow-hidden">
         <Image src={HERO_IMG} alt="Blue-green rough stone with a broad exposed face and pale host rock on a lapidary workbench" fill preload sizes="100vw" className="object-cover" />
