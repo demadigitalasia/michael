@@ -5,7 +5,13 @@ import { z } from "zod";
 
 /** Form mengirim priceUsd (mudah dibaca manusia) — disimpan sebagai cents. */
 const base = z.object({
-  zone: z.string().min(1).max(80),
+  // Hanya dua zona yang dikenal validasi checkout (lib/shipping.validRates)
+  zone: z
+    .string()
+    .min(1)
+    .max(80)
+    .transform((s) => s.trim().toLowerCase())
+    .pipe(z.enum(["domestic", "international"])),
   name: z.string().min(1).max(120),
   minWeightG: z.number().min(0),
   maxWeightG: z.number().min(1),

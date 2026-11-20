@@ -21,6 +21,20 @@ type Item = {
 type Rate = { id: string; zone: string; name: string; minWeightG: number; maxWeightG: number; priceCents: number };
 
 /**
+ * Daftar negara umum — select menentukan zona pengiriman secara pasti
+ * (isDomestic hanya mengenal Indonesia), free-text mudah salah ejaan.
+ */
+const COUNTRIES = [
+  "Indonesia", "Australia", "Austria", "Belgium", "Brazil", "Brunei", "Cambodia", "Canada", "China", "Croatia",
+  "Czechia", "Denmark", "Estonia", "Finland", "France", "Germany", "Greece", "Hong Kong", "Hungary", "Iceland",
+  "India", "Ireland", "Italy", "Japan", "Laos", "Latvia", "Liechtenstein", "Lithuania", "Luxembourg", "Malaysia",
+  "Maldives", "Malta", "Mexico", "Monaco", "Myanmar", "Netherlands", "New Zealand", "Norway", "Philippines",
+  "Poland", "Portugal", "Qatar", "Romania", "Saudi Arabia", "Singapore", "Slovakia", "Slovenia", "South Africa",
+  "South Korea", "Spain", "Sri Lanka", "Sweden", "Switzerland", "Taiwan", "Thailand", "Turkey", "United Arab Emirates",
+  "United Kingdom", "United States", "Vietnam",
+];
+
+/**
  * Checkout 3 langkah (peta PearlGem → MOTION-SPEC/DESIGN-SPEC §8):
  * 01 Address → 02 Shipping → 03 Review → Stripe (hosted, kartu/Apple/Google Pay).
  * Tarif difilter dengan aturan yang sama dengan validasi API (lib/shipping) —
@@ -125,7 +139,21 @@ export function CheckoutFlow({ items, rates }: { items: Item[]; rates: Rate[] })
               </label>
               <label className="grid gap-1.5">
                 <span className={labelCls}>Country</span>
-                <input placeholder="Country" className={field} value={address.country} onChange={(e) => setAddress({ ...address, country: e.target.value })} />
+                <select
+                  className={field}
+                  autoComplete="country-name"
+                  value={address.country}
+                  onChange={(e) => setAddress({ ...address, country: e.target.value })}
+                >
+                  <option value="" disabled>
+                    Select your country
+                  </option>
+                  {COUNTRIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
               </label>
             </div>
             <button

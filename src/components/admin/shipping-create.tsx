@@ -56,7 +56,14 @@ export function ShippingCreate() {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <label className="grid gap-1">
           <span className="eyebrow text-ink/60">Zone *</span>
-          <input name="zone" required maxLength={80} placeholder="Domestic" className={field} />
+          {/* Hanya dua zona yang dikenali validasi checkout (lib/shipping) — jangan free-text */}
+          <select name="zone" required defaultValue="" className={field}>
+            <option value="" disabled>
+              Zone…
+            </option>
+            <option value="domestic">Domestic — Indonesia</option>
+            <option value="international">International</option>
+          </select>
         </label>
         <label className="grid gap-1">
           <span className="eyebrow text-ink/60">Rate name *</span>
