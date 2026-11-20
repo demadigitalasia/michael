@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { jwtVerify } from "jose";
+import { authSecret } from "@/lib/auth-secret";
 
 /**
  * Proteksi /admin/* (kecuali login) — verifikasi JWT session cookie.
@@ -12,7 +13,7 @@ export async function proxy(req: NextRequest) {
 
   const token = req.cookies.get("ml_admin")?.value;
   const ok = token
-    ? await jwtVerify(token, new TextEncoder().encode(process.env.AUTH_SECRET ?? "dev-only-secret-ganti-di-production"))
+    ? await jwtVerify(token, authSecret())
         .then(() => true)
         .catch(() => false)
     : false;

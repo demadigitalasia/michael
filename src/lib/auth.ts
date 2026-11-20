@@ -1,9 +1,10 @@
 import { scryptSync, randomBytes, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
+import { authSecret } from "@/lib/auth-secret";
 
 const COOKIE = "ml_admin";
-const secret = () => new TextEncoder().encode(process.env.AUTH_SECRET ?? "dev-only-secret-ganti-di-production");
+const secret = authSecret;
 
 export function hashPassword(password: string): string {
   const salt = randomBytes(16).toString("hex");
