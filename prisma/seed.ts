@@ -149,14 +149,14 @@ async function main() {
         lengthMm: null, widthMm: null, depthMm: null,
         weightCarat: null, weightGram: null,
         priceCents: p.price,
-        featured: p.featured ?? false,
+        isConcept: true,
+        featured: false,
         slug: p.slug,
     };
     const images = {
       deleteMany: {},
       create: [
         { url: p.image, alt: `AI concept image of ${p.stoneType}; not the exact specimen`, sortOrder: 0, isPrimary: true },
-        { url: p.image, alt: `AI concept detail of ${p.stoneType}; not the exact specimen`, sortOrder: 1, isPrimary: false },
       ],
     };
     const existing = await prisma.product.findFirst({
@@ -164,12 +164,12 @@ async function main() {
       select: { id: true },
     });
     if (existing) {
-      await prisma.product.update({ where: { id: existing.id }, data: { ...data, images } });
-    } else {
-      await prisma.product.create({
-        data: { ...data, status: "AVAILABLE", publishedAt: new Date(), images: { create: images.create } },
-      });
+      console.log(`↷ kept existing product matching ${p.slug}`);
+      continue;
     }
+    await prisma.product.create({
+      data: { ...data, status: "AVAILABLE", publishedAt: new Date(), images: { create: images.create } },
+    });
   }
   console.log(`✔ ${products.length} products`);
 

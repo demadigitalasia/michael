@@ -75,6 +75,7 @@ model Product {
   priceCents   Int
   quantity     Int           @default(1)
   status       ProductStatus @default(DRAFT)
+  isConcept    Boolean       @default(false)
   featured     Boolean       @default(false)
   metaTitle    String        @default("") // SEO opsional — kosong = dari judul
   metaDescription String     @default("") // SEO opsional — kosong = dari deskripsi

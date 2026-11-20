@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { Prisma, Category } from "@prisma/client";
+import { conceptListingWhere, physicalListingWhere } from "@/lib/product-listing";
 
 /**
  * Status efektif item one-of-a-kind (PRD §6.3):
@@ -19,8 +20,10 @@ export async function listProducts(opts?: {
   category?: string;
   limit?: number;
   excludeSold?: boolean;
+  conceptOnly?: boolean;
 }) {
-  const where: Prisma.ProductWhereInput = { ...publicWhere };
+  const listingType = opts?.conceptOnly ? conceptListingWhere : physicalListingWhere;
+  const where: Prisma.ProductWhereInput = { ...publicWhere, ...listingType };
   if (opts?.category) where.category = opts.category as Category;
   if (opts?.excludeSold) where.status = { in: ["AVAILABLE", "RESERVED"] };
   return prisma.product.findMany({
@@ -34,13 +37,13 @@ export async function listProducts(opts?: {
 export async function getFeatured() {
   // Homepage hanya menampilkan stone yang benar-benar AVAILABLE
   const p = await prisma.product.findFirst({
-    where: { ...publicWhere, featured: true, status: "AVAILABLE" },
+    where: { ...publicWhere, ...physicalListingWhere, featured: true, status: "AVAILABLE" },
     include: { images: { orderBy: { sortOrder: "asc" } } },
   });
   if (p) return p;
   // fallback: produk terbaru yang masih tersedia
   return prisma.product.findFirst({
-    where: { ...publicWhere, status: "AVAILABLE" },
+    where: { ...publicWhere, ...physicalListingWhere, status: "AVAILABLE" },
     orderBy: { publishedAt: "desc" },
     include: { images: { orderBy: { sortOrder: "asc" } } },
   });
@@ -56,7 +59,7 @@ export async function getProductBySlug(slug: string) {
 export async function countByCategory() {
   const rows = await prisma.product.groupBy({
     by: ["category"],
-    where: { ...publicWhere, status: { in: ["AVAILABLE", "RESERVED"] } },
+    where: { ...publicWhere, ...physicalListingWhere, status: { in: ["AVAILABLE", "RESERVED"] } },
     _count: { _all: true },
   });
   return Object.fromEntries(rows.map((r) => [r.category, r._count._all]));
@@ -64,7 +67,7 @@ export async function countByCategory() {
 
 export async function getRelated(product: { id: string; stoneType: string; category: string }, limit = 4) {
   const sameStone = await prisma.product.findMany({
-    where: { ...publicWhere, id: { not: product.id }, stoneType: product.stoneType },
+    where: { ...publicWhere, ...physicalListingWhere, id: { not: product.id }, stoneType: product.stoneType },
     take: limit,
     include: { images: { orderBy: { sortOrder: "asc" } } },
   });
@@ -72,6 +75,7 @@ export async function getRelated(product: { id: string; stoneType: string; categ
   const sameCat = await prisma.product.findMany({
     where: {
       ...publicWhere,
+      ...physicalListingWhere,
       id: { notIn: [product.id, ...sameStone.map((s) => s.id)] },
       category: product.category as Category,
     },
@@ -79,20 +83,4 @@ export async function getRelated(product: { id: string; stoneType: string; categ
     include: { images: { orderBy: { sortOrder: "asc" } } },
   });
   return [...sameStone, ...sameCat];
-}
-
-export function specLines(p: {
-  lengthMm: number | null; widthMm: number | null; depthMm: number | null;
-  weightCarat: number | null; weightGram: number | null; treatment: string; origin: string;
-}): string[] {
-  const lines: string[] = [];
-  if (p.lengthMm && p.widthMm) {
-    const dims = `${p.lengthMm} × ${p.widthMm}${p.depthMm ? ` × ${p.depthMm}` : ""} mm`;
-    lines.push(dims);
-  }
-  if (p.weightCarat) lines.push(`${p.weightCarat} ct`);
-  if (p.weightGram) lines.push(`${p.weightGram.toLocaleString("en-US")} g`);
-  if (p.treatment) lines.push(p.treatment.toLowerCase().replace("_", " "));
-  if (p.origin) lines.push(p.origin);
-  return lines;
 }
