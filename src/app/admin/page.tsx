@@ -4,6 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { effectiveStatus } from "@/lib/products";
 import { formatUsd } from "@/lib/site";
 
+// Halaman admin selalu dinamis — private, tak di-prerender/ter-cache
+export const dynamic = "force-dynamic";
+
 export default async function AdminOverviewPage() {
   const [toShip, newInquiryCount, newOrders, newInquiries, soldCount, revenueAgg, products] = await Promise.all([
     // Kartu KPI: hitung semua (bukan take:5 — angka kartu harus akurat)

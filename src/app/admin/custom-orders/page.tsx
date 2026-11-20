@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { InquiryControls } from "@/components/admin/inquiry-controls";
 
+// Halaman admin selalu dinamis — private, tak di-prerender/ter-cache
+export const dynamic = "force-dynamic";
+
 export default async function AdminCustomOrdersPage() {
   const inquiries = await prisma.customOrder.findMany({ orderBy: { createdAt: "desc" } });
   const isNew = (s: string) => s === "NEW";

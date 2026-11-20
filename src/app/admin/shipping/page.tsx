@@ -5,6 +5,9 @@ import { ShippingCreate } from "@/components/admin/shipping-create";
 
 export const metadata = { title: "Admin · Shipping" };
 
+// Halaman admin selalu dinamis — private, tak di-prerender/ter-cache
+export const dynamic = "force-dynamic";
+
 export default async function AdminShippingPage() {
   const rates = await prisma.shippingRate.findMany({ orderBy: [{ zone: "asc" }, { minWeightG: "asc" }] });
 

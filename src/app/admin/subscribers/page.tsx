@@ -4,6 +4,9 @@ import { Download } from "@/components/icons";
 
 export const metadata = { title: "Admin · Subscribers" };
 
+// Halaman admin selalu dinamis — private, tak di-prerender/ter-cache
+export const dynamic = "force-dynamic";
+
 export default async function AdminSubscribersPage() {
   const subs = await prisma.newsletterSubscriber.findMany({ orderBy: { createdAt: "desc" } });
 

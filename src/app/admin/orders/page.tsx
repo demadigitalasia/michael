@@ -8,6 +8,9 @@ type Status = (typeof STATUSES)[number];
 
 type Address = { name?: string; line1?: string; city?: string; zip?: string; country?: string };
 
+// Halaman admin selalu dinamis — private, tak di-prerender/ter-cache
+export const dynamic = "force-dynamic";
+
 export default async function AdminOrdersPage({
   searchParams,
 }: {

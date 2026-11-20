@@ -4,6 +4,9 @@ import { ReviewCreate } from "@/components/admin/review-create";
 
 export const metadata = { title: "Admin · Reviews" };
 
+// Halaman admin selalu dinamis — private, tak di-prerender/ter-cache
+export const dynamic = "force-dynamic";
+
 export default async function AdminReviewsPage() {
   const reviews = await prisma.review.findMany({ orderBy: { createdAt: "desc" } });
   const live = reviews.filter((r) => r.published).length;

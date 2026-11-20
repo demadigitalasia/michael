@@ -3,6 +3,9 @@ import { getSettings } from "@/lib/settings";
 
 export const metadata = { title: "Admin · Settings" };
 
+// Halaman admin selalu dinamis — private, tak di-prerender/ter-cache
+export const dynamic = "force-dynamic";
+
 export default async function AdminSettingsPage() {
   const s = await getSettings();
 

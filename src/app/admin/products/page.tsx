@@ -6,6 +6,9 @@ import { effectiveStatus } from "@/lib/products";
 import { formatUsd } from "@/lib/site";
 import { ProductForm } from "@/components/admin/product-form";
 
+// Halaman admin selalu dinamis — private, tak di-prerender/ter-cache
+export const dynamic = "force-dynamic";
+
 export default async function AdminProductsPage({
   searchParams,
 }: {
