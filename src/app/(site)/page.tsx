@@ -12,8 +12,7 @@ import { StatsCounters } from "@/components/stats-counters";
 import { Ticker } from "@/components/ticker";
 import { lookbookPhoto } from "@/lib/product-listing";
 import { StatusBadge } from "@/components/status-badge";
-import { countByCategory, getFeatured, listProducts } from "@/lib/products";
-import { prisma } from "@/lib/prisma";
+import { countByCategory, getFeatured, getPublishedReviews, listProducts } from "@/lib/products";
 import { getSettings } from "@/lib/settings";
 import { categories, formatUsd, site } from "@/lib/site";
 
@@ -93,7 +92,7 @@ export default async function HomePage() {
     getFeatured(),
     listProducts({ limit: 8 }),
     countByCategory(),
-    prisma.review.findMany({ where: { published: true }, orderBy: { createdAt: "asc" } }),
+    getPublishedReviews(),
     getSettings(),
   ]);
 

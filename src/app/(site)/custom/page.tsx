@@ -2,7 +2,7 @@ import { CustomFlow } from "@/components/custom-flow";
 import { CustomOrderForm } from "@/components/custom-order-form";
 import { Reveal } from "@/components/reveal";
 import { ArrowRight } from "@/components/icons";
-import { prisma } from "@/lib/prisma";
+import { getPublishedReviews } from "@/lib/products";
 
 export const revalidate = 60;
 
@@ -27,7 +27,7 @@ const PRICING = [
 ];
 
 export default async function CustomPage() {
-  const reviews = await prisma.review.findMany({ where: { published: true }, take: 3 });
+  const reviews = await getPublishedReviews(3);
 
   return (
     <div className="pt-24">

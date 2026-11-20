@@ -5,10 +5,16 @@ import { site } from "@/lib/site";
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const products = await prisma.product.findMany({
-    where: { status: { in: ["AVAILABLE", "RESERVED", "SOLD"] }, publishedAt: { not: null } },
-    select: { slug: true, updatedAt: true },
-  });
+  // DB tak selalu ter-reach saat prerender — fallback hanya halaman statis
+  let products: Array<{ slug: string; updatedAt: Date }> = [];
+  try {
+    products = await prisma.product.findMany({
+      where: { status: { in: ["AVAILABLE", "RESERVED", "SOLD"] }, publishedAt: { not: null } },
+      select: { slug: true, updatedAt: true },
+    });
+  } catch (e) {
+    console.error("[sitemap] DB tidak ter-reach saat prerender:", e instanceof Error ? e.message : e);
+  }
 
   const staticPages = ["", "/shop", "/collections", "/custom", "/the-workshop", "/care", "/journal", "/contact", "/material-studies", "/privacy", "/terms"].map((p) => ({
     url: `${site.url}${p}`,
