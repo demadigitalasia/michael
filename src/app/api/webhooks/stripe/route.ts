@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import type StripeTypes from "stripe";
 import { prisma } from "@/lib/prisma";
-import { sendMail, orderConfirmationHtml } from "@/lib/mail";
+import { sendMail, orderConfirmationHtml, refundHtml } from "@/lib/mail";
+import { effectiveStatus } from "@/lib/products";
 import { site } from "@/lib/site";
 
 export const runtime = "nodejs";
@@ -11,6 +12,9 @@ export const runtime = "nodejs";
  * Stripe webhook — SATU-SATUNYA sumber kebenaran untuk fulfillment (PRD §10):
  * checkout.session.completed → order PAID → produk SOLD → email → kosongkan cart.
  * Idempoten: kalau order sudah PAID, abaikan.
+ * Re-validasi: batu bisa sudah terjual ke pembeli lain selama menunggu pembayaran —
+ * pembeli yang kalah race di-refund otomatis dan ordernya CANCELLED (terms:
+ * first completed payment owns the stone).
  */
 export async function POST(req: Request) {
   const secret = process.env.STRIPE_SECRET_KEY;
@@ -45,26 +49,64 @@ export async function POST(req: Request) {
       return NextResponse.json({ received: true, note: "already processed" });
     }
 
-    // PAID + produk SOLD
-    await prisma.order.update({
-      where: { orderNumber },
-      data: {
-        status: "PAID",
-        stripePaymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : null,
-      },
-    });
+    // Cart pemegang hold sesuai metadata (bisa sudah terhapus — hold TTL 30 menit)
+    const cart = cartToken ? await prisma.cart.findUnique({ where: { token: cartToken } }) : null;
+    const holderCartId = cart?.id ?? null;
+
+    // Re-validasi ketersediaan tiap item sebelum fulfill
+    const conflicts: string[] = [];
     for (const item of existing.items) {
-      // Pembayaran menang (terms: first completed payment owns the stone)
-      await prisma.product.updateMany({
-        where: { id: item.productId, status: { in: ["AVAILABLE", "RESERVED"] } },
-        data: { status: "SOLD", reservedUntil: null },
+      const p = await prisma.product.findUnique({ where: { id: item.productId } });
+      if (!p) {
+        conflicts.push(item.productTitleSnapshot);
+        continue;
+      }
+      const eff = effectiveStatus(p);
+      if (eff === "SOLD" || (eff === "RESERVED" && p.reservedByCartId && p.reservedByCartId !== holderCartId)) {
+        conflicts.push(item.productTitleSnapshot);
+      }
+    }
+
+    if (conflicts.length > 0) {
+      // Kalah race: refund pembayaran lalu batalkan order (PENDING dipertahankan
+      // bila refund gagal, supaya retry webhook dari Stripe mencoba lagi).
+      const paymentIntent = typeof session.payment_intent === "string" ? session.payment_intent : null;
+      if (paymentIntent) {
+        try {
+          await stripe.refunds.create({ payment_intent: paymentIntent });
+        } catch (err) {
+          console.error(`Order ${orderNumber}: refund gagal — tunggu retry Stripe`, err);
+          return NextResponse.json({ error: "Refund failed" }, { status: 500 });
+        }
+      }
+      await prisma.order.update({ where: { orderNumber }, data: { status: "CANCELLED" } });
+      console.error(`Order ${orderNumber}: item tak lagi tersedia (${conflicts.join(", ")}) — direfund & dibatalkan`);
+      await sendMail({
+        to: existing.email,
+        subject: `Order ${orderNumber} — refund on its way`,
+        html: refundHtml({ orderNumber, totalCents: existing.totalCents, siteUrl: site.url }),
+      }).catch(() => undefined);
+      return NextResponse.json({ received: true, note: "refunded: items no longer available" });
+    }
+
+    // Fulfillment atomik: PAID + produk SOLD + kosongkan cart dalam satu transaksi —
+    // retry webhook setelah crash tidak meninggalkan kondisi setengah jadi.
+    const paymentIntent = typeof session.payment_intent === "string" ? session.payment_intent : null;
+    await prisma.$transaction(async (tx) => {
+      const fresh = await tx.order.findUnique({ where: { orderNumber }, select: { status: true } });
+      if (!fresh || fresh.status !== "PENDING") return; // diproses webhook lain — idempoten
+      await tx.order.update({
+        where: { orderNumber },
+        data: { status: "PAID", stripePaymentIntentId: paymentIntent },
       });
-    }
-    // Kosongkan cart
-    if (cartToken) {
-      const cart = await prisma.cart.findUnique({ where: { token: cartToken } });
-      if (cart) await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
-    }
+      for (const item of existing.items) {
+        await tx.product.updateMany({
+          where: { id: item.productId, status: { in: ["AVAILABLE", "RESERVED"] } },
+          data: { status: "SOLD", reservedUntil: null, reservedByCartId: null },
+        });
+      }
+      if (cart) await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
+    });
 
     // Email konfirmasi (best-effort)
     await sendMail({

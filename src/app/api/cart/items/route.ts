@@ -15,20 +15,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "This listing needs a shipping weight before checkout" }, { status: 409 });
     }
 
-    const token = await getCartToken();
-    const inOwnBag = token
-      ? (await prisma.cartItem.findFirst({ where: { cart: { token }, productId } })) !== null
-      : false;
+    const token = await ensureCart();
+    const cart = await prisma.cart.findUniqueOrThrow({ where: { token } });
+    const inOwnBag =
+      (await prisma.cartItem.findFirst({ where: { cartId: cart.id, productId } })) !== null;
 
-    // reserveProduct: AVAILABLE / hold kedaluwarsa → RESERVED (TTL 30 menit).
-    // Hold milik sendiri yang masih valid: no-op, tetap dianggap ok (sudah di bag).
-    const reserved = await reserveProduct(productId);
-    if (!reserved && !inOwnBag) {
+    // reserveProduct: AVAILABLE / hold kedaluwarsa → RESERVED milik cart ini (TTL 30 menit);
+    // hold milik cart ini yang masih valid → perpanjang TTL. Gagal = cart lain memegang.
+    const reserved = await reserveProduct(productId, cart.id);
+    if (!reserved) {
       return NextResponse.json({ error: "Someone is holding this stone right now" }, { status: 409 });
     }
 
-    const cartToken = await ensureCart();
-    const cart = await prisma.cart.findUniqueOrThrow({ where: { token: cartToken } });
     if (!inOwnBag) {
       await prisma.cartItem.upsert({
         where: { cartId_productId: { cartId: cart.id, productId } },

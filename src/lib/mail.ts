@@ -82,3 +82,13 @@ export function shippedHtml(opts: { orderNumber: string; trackingNumber: string;
     <p style="font-size:13px;color:rgba(18,18,20,.6)">Care guides for your specific stones are in the parcel.</p>
   </div>`;
 }
+
+export function refundHtml(opts: { orderNumber: string; totalCents: number; siteUrl: string }) {
+  return `
+  <div style="font-family:ui-sans-serif,system-ui,sans-serif;max-width:560px;margin:0 auto;background:#E9E5DE;padding:32px;color:#121214">
+    <p style="font-size:11px;letter-spacing:.14em;font-weight:700;margin:0">MICHAEL LAPIDARY</p>
+    <h1 style="font-size:28px;text-transform:uppercase;letter-spacing:-.01em;margin:16px 0 8px">Order ${escapeHtml(opts.orderNumber)} — refund on its way</h1>
+    <p style="color:rgba(18,18,20,.72);line-height:1.55">Every stone here is one of a kind, and the one in your order was claimed by an earlier completed payment moments before yours arrived. Your payment of <b>$${(opts.totalCents / 100).toFixed(2)}</b> has been refunded — it usually shows on your statement within 5–10 business days.</p>
+    <p style="font-size:13px;color:rgba(18,18,20,.6)">We are sorry — if you would like first pick of the next similar stone, reply to this email and we will hold it for you before it goes live.</p>
+  </div>`;
+}

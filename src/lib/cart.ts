@@ -71,13 +71,15 @@ export async function getCartCount(): Promise<number> {
 }
 
 /**
- * Reservasi item saat masuk cart (PRD §6.3): AVAILABLE → RESERVED dengan TTL.
- * Item RESERVED yang kedaluwarsa otomatis boleh diambil lagi (dicek di sini).
+ * Reservasi item saat masuk cart (PRD §6.3): AVAILABLE → RESERVED dengan TTL,
+ * diatribusikan ke cart pemegang agar sesi lain tak bisa checkout dengan hold kita.
+ * Item RESERVED yang kedaluwarsa otomatis boleh diambil lagi (dicek di sini);
+ * hold milik cart ini yang masih valid diperpanjang (bukan gagal).
  */
-export async function reserveProduct(productId: string): Promise<boolean> {
+export async function reserveProduct(productId: string, cartId: string): Promise<boolean> {
   const now = new Date();
   const reservedUntil = new Date(now.getTime() + site.reservationMinutes * 60 * 1000);
-  const result = await prisma.product.updateMany({
+  const claim = await prisma.product.updateMany({
     where: {
       id: productId,
       ...purchasableListing,
@@ -96,14 +98,20 @@ export async function reserveProduct(productId: string): Promise<boolean> {
         },
       ],
     },
-    data: { status: "RESERVED", reservedUntil },
+    data: { status: "RESERVED", reservedUntil, reservedByCartId: cartId },
   });
-  return result.count > 0;
+  if (claim.count > 0) return true;
+  // Hold milik cart ini yang masih valid → perpanjang TTL
+  const extend = await prisma.product.updateMany({
+    where: { id: productId, status: "RESERVED", reservedByCartId: cartId, reservedUntil: { gt: now } },
+    data: { reservedUntil },
+  });
+  return extend.count > 0;
 }
 
 export async function releaseProduct(productId: string): Promise<void> {
   await prisma.product.updateMany({
     where: { id: productId, status: "RESERVED" },
-    data: { status: "AVAILABLE", reservedUntil: null },
+    data: { status: "AVAILABLE", reservedUntil: null, reservedByCartId: null },
   });
 }

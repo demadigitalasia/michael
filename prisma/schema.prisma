@@ -80,6 +80,7 @@ model Product {
   metaTitle    String        @default("") // SEO opsional — kosong = dari judul
   metaDescription String     @default("") // SEO opsional — kosong = dari deskripsi
   reservedUntil DateTime?
+  reservedByCartId String? @db.Uuid // cart pemegang hold — tanpa relasi FK (cart boleh terhapus duluan)
   publishedAt  DateTime?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt

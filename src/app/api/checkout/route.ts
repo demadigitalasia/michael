@@ -34,23 +34,28 @@ export async function POST(req: Request) {
     // Validasi & re-reserve (perpanjang TTL saat mulai checkout)
     const body = schema.parse(await req.json());
     const token = await ensureCart();
+    const cart = await prisma.cart.findUniqueOrThrow({ where: { token } });
     const items = await getCartItems(token);
     if (items.length === 0) return NextResponse.json({ error: "Bag is empty" }, { status: 400 });
 
-    // Status diperiksa per item: SOLD/tersembunyi ditolak; hold kedaluwarsa di-re-reserve.
+    // Status diperiksa per item: SOLD/tersembunyi ditolak; hold kedaluwarsa atau
+    // milik cart ini di-re-reserve/perpanjang; hold milik cart LAIN ditolak.
     const invalid: { id: string; title: string }[] = [];
     for (const item of items) {
       const p = await prisma.product.findUnique({
         where: { id: item.productId },
-        select: { status: true, reservedUntil: true },
+        select: { status: true, reservedUntil: true, reservedByCartId: true },
       });
       if (!p || ["SOLD", "DRAFT", "HIDDEN"].includes(effectiveStatus(p))) {
         invalid.push({ id: item.productId, title: item.title });
         continue;
       }
-      if (effectiveStatus(p) === "AVAILABLE") {
-        const ok = await reserveProduct(item.productId); // AVAILABLE / hold kedaluwarsa
+      const eff = effectiveStatus(p);
+      if (eff === "AVAILABLE" || (eff === "RESERVED" && p.reservedByCartId === cart.id)) {
+        const ok = await reserveProduct(item.productId, cart.id); // claim / perpanjang
         if (!ok) invalid.push({ id: item.productId, title: item.title });
+      } else {
+        invalid.push({ id: item.productId, title: item.title }); // hold milik sesi lain
       }
     }
     if (invalid.length > 0) {
