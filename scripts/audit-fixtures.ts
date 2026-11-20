@@ -1,6 +1,7 @@
 // Audit helper: buat 1 order PAID + 1 custom inquiry untuk menguji halaman admin.
 // Jalankan: pnpm tsx scripts/audit-fixtures.ts
 import "dotenv/config";
+import { randomBytes } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
@@ -18,6 +19,7 @@ async function main() {
     (await prisma.order.create({
       data: {
         orderNumber: "ML-AUDIT01",
+        accessToken: randomBytes(16).toString("hex"),
         email: "buyer@example.com",
         status: "PAID",
         subtotalCents: stone.priceCents,

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { randomBytes } from "node:crypto";
+import { Prisma } from "@prisma/client";
 import { getCartItems, getCartToken, ensureCart, releaseProduct, reserveProduct } from "@/lib/cart";
 import { effectiveStatus } from "@/lib/products";
 import { shipmentWeightGrams, validRates } from "@/lib/shipping";
@@ -81,29 +83,53 @@ export async function POST(req: Request) {
     }
 
     const subtotal = items.reduce((s, i) => s + i.priceCents, 0);
-    const number = orderNumber();
     const shippingAddress = { name: body.name, line1: body.line1, city: body.city, zip: body.zip, country: body.country };
 
-    // Order dibuat dengan status PENDING — webhook yang mengangkat ke PAID (idempoten)
-    const order = await prisma.order.create({
-      data: {
-        orderNumber: number,
-        email: body.email,
-        status: "PENDING",
-        subtotalCents: subtotal,
-        shippingCents: rate.priceCents,
-        totalCents: subtotal + rate.priceCents,
-        shippingAddress,
-        items: {
-          create: items.map((i) => ({
-            productId: i.productId,
-            productTitleSnapshot: i.title,
-            productSlugSnapshot: i.slug,
-            priceCents: i.priceCents,
-          })),
+    // Order dibuat dengan status PENDING — webhook yang mengangkat ke PAID (idempoten).
+    // orderNumber 6-digit bisa tabrakan (unique) → regenerate dan coba lagi.
+    let order: Awaited<ReturnType<typeof createOrder>> | null = null;
+    let number = orderNumber();
+    let accessToken = randomBytes(16).toString("hex");
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        order = await createOrder({ orderNumber: number, accessToken, email: body.email, subtotal, shippingCents: rate.priceCents, shippingAddress, items });
+        break;
+      } catch (e) {
+        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+          number = orderNumber();
+          accessToken = randomBytes(16).toString("hex");
+          continue;
+        }
+        throw e;
+      }
+    }
+    if (!order) return NextResponse.json({ error: "Server error" }, { status: 500 });
+
+    async function createOrder(input: {
+      orderNumber: string; accessToken: string; email: string; subtotal: number; shippingCents: number;
+      shippingAddress: typeof shippingAddress; items: typeof items;
+    }) {
+      return prisma.order.create({
+        data: {
+          orderNumber: input.orderNumber,
+          accessToken: input.accessToken,
+          email: input.email,
+          status: "PENDING",
+          subtotalCents: input.subtotal,
+          shippingCents: input.shippingCents,
+          totalCents: input.subtotal + input.shippingCents,
+          shippingAddress: input.shippingAddress,
+          items: {
+            create: input.items.map((i) => ({
+              productId: i.productId,
+              productTitleSnapshot: i.title,
+              productSlugSnapshot: i.slug,
+              priceCents: i.priceCents,
+            })),
+          },
         },
-      },
-    });
+      });
+    }
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -126,7 +152,7 @@ export async function POST(req: Request) {
           },
         },
       ],
-      success_url: `${site.url}/checkout/success?order=${order.orderNumber}`,
+      success_url: `${site.url}/checkout/success?order=${order.orderNumber}&token=${order.accessToken}`,
       cancel_url: `${site.url}/cart`,
       metadata: {
         cartToken: token,

@@ -5,27 +5,43 @@ import { formatUsd } from "@/lib/site";
 
 export const metadata = { title: "Order confirmed" };
 
+/** Label ramah — jangan tampilkan "Payment received — Status: pending" berdampingan. */
+const STATUS_LABEL: Record<string, string> = {
+  PENDING: "Payment being confirmed",
+  PAID: "Payment received",
+  PROCESSING: "Being packed",
+  SHIPPED: "Shipped",
+  DELIVERED: "Delivered",
+  CANCELLED: "Cancelled",
+  REFUNDED: "Refunded",
+};
+
 export default async function CheckoutSuccessPage({
   searchParams,
 }: {
-  searchParams: Promise<{ order?: string }>;
+  searchParams: Promise<{ order?: string; token?: string }>;
 }) {
-  const { order: orderNumber } = await searchParams;
+  const { order: orderNumber, token } = await searchParams;
+  // Order number saja bisa ditebak (6 digit) — detail hanya dengan token acak yang cocok.
   const order = orderNumber
     ? await prisma.order.findUnique({ where: { orderNumber }, include: { items: true } })
     : null;
+  const authorized = order != null && token != null && order.accessToken === token;
 
+  const paid = authorized && order.status !== "PENDING";
   return (
     <div className="mx-auto max-w-3xl px-4 pb-24 pt-36 sm:px-6">
-      <p className="eyebrow text-ink/60">{order ? `Order ${order.orderNumber}` : "Thank you"}</p>
+      <p className="eyebrow text-ink/60">{authorized ? `Order ${order.orderNumber}` : "Thank you"}</p>
       <h1 className="display mt-3 text-[clamp(44px,7vw,96px)] text-ink">It’s yours.</h1>
       <p className="body-muted mt-4 max-w-[52ch] text-[17px] leading-relaxed">
-        {order
-          ? `Payment received — ${formatUsd(order.totalCents)} — and your stones are being packed. A confirmation email is on its way to ${order.email}, with tracking to follow once it ships.`
+        {authorized
+          ? paid
+            ? `Payment received — ${formatUsd(order.totalCents)} — and your stones are being packed. A confirmation email is on its way to ${order.email}, with tracking to follow once it ships.`
+            : `Your payment is being confirmed. Once it clears, a receipt for ${formatUsd(order.totalCents)} goes to ${order.email} — this page will say “payment received” then.`
           : "Payment received. A confirmation email is on its way with your order details and tracking to follow."}
       </p>
 
-      {order && (
+      {authorized && (
         <div className="mt-10 rounded-[6px] border border-ink/10 bg-sketch p-8">
           <p className="eyebrow text-ink/60">In this parcel</p>
           <ul className="mt-4 space-y-2">
@@ -38,7 +54,7 @@ export default async function CheckoutSuccessPage({
               </li>
             ))}
           </ul>
-          <p className="eyebrow mt-4 text-ink/60">Status: {order.status.toLowerCase()}</p>
+          <p className="eyebrow mt-4 text-ink/60">Status: {STATUS_LABEL[order.status] ?? order.status.toLowerCase()}</p>
         </div>
       )}
 
