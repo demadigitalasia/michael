@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { randomBytes } from "node:crypto";
 import { Prisma } from "@prisma/client";
-import { getCartItems, getCartToken, ensureCart, releaseProduct, reserveProduct } from "@/lib/cart";
+import { getCartItems, ensureCart, reserveProduct } from "@/lib/cart";
 import { effectiveStatus } from "@/lib/products";
 import { shipmentWeightGrams, validRates } from "@/lib/shipping";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
 import { site } from "@/lib/site";
 import { z } from "zod";
@@ -24,6 +25,11 @@ function orderNumber() {
 }
 
 export async function POST(req: Request) {
+  // Membuat order + memanggil Stripe — batasi spam (10 mulai checkout / 10 mnt per IP)
+  const limit = rateLimit(`checkout:${clientIp(req)}`, 10, 10 * 60 * 1000);
+  if (!limit.ok) {
+    return NextResponse.json({ error: "Too many attempts — try again in a few minutes" }, { status: 429 });
+  }
   try {
     if (!process.env.STRIPE_SECRET_KEY) {
       return NextResponse.json(
@@ -167,15 +173,4 @@ export async function POST(req: Request) {
     console.error(e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
-}
-
-// Opsional: bersih-bersih item yang tidak tersedia saat GET (utility untuk cron manual)
-export async function DELETE() {
-  const token = await getCartToken();
-  const items = await getCartItems(token);
-  for (const i of items) {
-    const p = await prisma.product.findUnique({ where: { id: i.productId } });
-    if (p && p.status === "SOLD") await releaseProduct(p.id);
-  }
-  return NextResponse.json({ ok: true });
 }

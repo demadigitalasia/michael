@@ -36,6 +36,16 @@ export async function PUT(req: Request) {
       }
     }
 
+    // Refund → batu kembali AVAILABLE supaya bisa dijual lagi (bukan SOLD selamanya)
+    if (before && before.status !== "REFUNDED" && data.status === "REFUNDED") {
+      for (const item of before.items) {
+        await prisma.product.updateMany({
+          where: { id: item.productId, status: { in: ["SOLD", "RESERVED"] } },
+          data: { status: "AVAILABLE", reservedUntil: null, reservedByCartId: null },
+        });
+      }
+    }
+
     // Transisi ke SHIPPED → kirim email tracking (sekali saja)
     if (before?.status !== "SHIPPED" && data.status === "SHIPPED" && data.trackingNumber) {
       await sendMail({

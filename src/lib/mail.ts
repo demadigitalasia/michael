@@ -1,5 +1,11 @@
 import { Resend } from "resend";
 
+// Production tanpa API key = email pelanggan hilang diam-diam (form contact mengaku
+// sukses, konfirmasi order tak terkirim). Gagal cepat saat start — pola lib/auth-secret.
+if (process.env.NODE_ENV === "production" && !process.env.RESEND_API_KEY) {
+  throw new Error("RESEND_API_KEY must be set in production — emails would be silently dropped");
+}
+
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 /**

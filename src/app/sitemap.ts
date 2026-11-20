@@ -10,7 +10,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     select: { slug: true, updatedAt: true },
   });
 
-  const staticPages = ["", "/shop", "/collections", "/custom", "/the-workshop", "/care", "/journal", "/contact", "/privacy", "/terms"].map((p) => ({
+  const staticPages = ["", "/shop", "/collections", "/custom", "/the-workshop", "/care", "/journal", "/contact", "/material-studies", "/privacy", "/terms"].map((p) => ({
     url: `${site.url}${p}`,
     lastModified: new Date(),
     changeFrequency: p === "" ? ("daily" as const) : ("weekly" as const),

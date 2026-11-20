@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendMail } from "@/lib/mail";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { site } from "@/lib/site";
 import { z } from "zod";
 
@@ -20,6 +21,13 @@ const schema = z.object({
 });
 
 export async function POST(req: Request) {
+  const limit = rateLimit(`custom:${clientIp(req)}`, 5, 10 * 60 * 1000);
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: "Too many inquiries — try again in a few minutes, or email us directly." },
+      { status: 429 },
+    );
+  }
   try {
     const body = await req.json();
     const data = schema.parse(body);

@@ -17,9 +17,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Login failed" }, { status: 400 });
   }
 
-  // Brute-force guard: 5 percobaan per IP+email per 15 menit
+  // Brute-force guard dua lapis: 5 percobaan per IP+email (rotasi email tidak lolos)
+  // dan 20 percobaan per IP per 15 menit (bukan nge-brute banyak akun sekaligus).
+  const ip = clientIp(req);
+  const ipLimit = rateLimit(`login-ip:${ip}`, 20, LOGIN_WINDOW_MS);
+  if (!ipLimit.ok) {
+    return NextResponse.json(
+      { error: `Too many attempts — try again in ${Math.ceil(ipLimit.retryAfterSec / 60)} min` },
+      { status: 429, headers: { "Retry-After": String(ipLimit.retryAfterSec) } },
+    );
+  }
   const email = String((body as { email?: string }).email ?? "").toLowerCase();
-  const limit = rateLimit(`login:${clientIp(req)}:${email}`, LOGIN_MAX_ATTEMPTS, LOGIN_WINDOW_MS);
+  const limit = rateLimit(`login:${ip}:${email}`, LOGIN_MAX_ATTEMPTS, LOGIN_WINDOW_MS);
   if (!limit.ok) {
     return NextResponse.json(
       { error: `Too many attempts — try again in ${Math.ceil(limit.retryAfterSec / 60)} min` },

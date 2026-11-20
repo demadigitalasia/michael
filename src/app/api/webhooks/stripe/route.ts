@@ -119,6 +119,14 @@ export async function POST(req: Request) {
         siteUrl: site.url,
       }),
     }).catch(() => undefined);
+
+    // Housekeeping ringan (sekali per webhook, murah): cart kedaluwarsa dibuang
+    // (cascade items) dan order PENDING >24 jam dibatalkan — Stripe sessionExpired.
+    const staleBefore = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    await prisma.cart.deleteMany({ where: { expiresAt: { lt: staleBefore } } }).catch(() => undefined);
+    await prisma.order
+      .updateMany({ where: { status: "PENDING", placedAt: { lt: staleBefore } }, data: { status: "CANCELLED" } })
+      .catch(() => undefined);
   }
 
   return NextResponse.json({ received: true });
