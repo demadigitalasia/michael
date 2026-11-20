@@ -5,8 +5,8 @@ FROM node:22-alpine AS build
 RUN corepack enable
 WORKDIR /app
 
-# 1) Dependensi
-COPY package.json pnpm-lock.yaml ./
+# 1) Dependensi — .npmrc ikut di-copy agar settings pnpm cocok dengan lockfile
+COPY package.json pnpm-lock.yaml .npmrc ./
 RUN pnpm install --frozen-lockfile
 
 # 2) Build
