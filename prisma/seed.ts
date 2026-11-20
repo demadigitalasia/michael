@@ -26,10 +26,15 @@ async function main() {
     { zone: "International", name: "International tracked", minWeightG: 0, maxWeightG: 500, priceCents: 2400 },
     { zone: "International", name: "International insured", minWeightG: 500, maxWeightG: 5000, priceCents: 4500 },
   ];
-  for (const s of shipping) {
-    await prisma.shippingRate.create({ data: s });
+  // Idempoten: lewati bila sudah ada — seed boleh dijalankan ulang tanpa duplikat
+  if ((await prisma.shippingRate.count()) === 0) {
+    for (const s of shipping) {
+      await prisma.shippingRate.create({ data: s });
+    }
+    console.log(`✔ ${shipping.length} shipping rates`);
+  } else {
+    console.log("↷ shipping rates sudah ada — dilewati");
   }
-  console.log(`✔ ${shipping.length} shipping rates`);
 
   // ---------- Products ----------
   type P = {
@@ -179,8 +184,12 @@ async function main() {
     { author: "Tom & Priya", location: "Bristol", quote: "The measurements were exact to the tenth of a millimetre. Both cabs sit flush in the bezels we made.", productName: "Bacan Chrysocolla Quartz Cabochons" },
     { author: "Ines M.", location: "Lisbon", quote: "Third order this year. The treatment notes are more honest than anyone else I buy from.", productName: "Garut Red Jasper Cabochon" },
   ];
-  for (const r of reviews) await prisma.review.create({ data: r });
-  console.log(`✔ ${reviews.length} reviews`);
+  if ((await prisma.review.count()) === 0) {
+    for (const r of reviews) await prisma.review.create({ data: r });
+    console.log(`✔ ${reviews.length} reviews`);
+  } else {
+    console.log("↷ reviews sudah ada — dilewati");
+  }
 
   console.log("Seed selesai.");
 }

@@ -35,5 +35,5 @@ VOLUME ["/app/uploads"]
 
 EXPOSE 3000
 
-# Migrasi DB dulu (aman idempoten), lalu server
-CMD ["sh", "-c", "pnpm prisma migrate deploy && pnpm start"]
+# Migrasi DB dulu (aman idempoten), seed sekali pertama bila SEED_ON_START=true, lalu server
+CMD ["sh", "-c", "pnpm prisma migrate deploy && if [ \"$SEED_ON_START\" = \"true\" ]; then pnpm tsx prisma/seed.ts; fi; pnpm start"]
