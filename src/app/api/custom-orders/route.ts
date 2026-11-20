@@ -11,6 +11,12 @@ const schema = z.object({
   description: z.string().min(10).max(5000),
   budgetUsd: z.number().nullable().optional(),
   timeline: z.string().max(200).optional().default(""),
+  // Link gambar referensi (tanpa upload anonim) — URL publik yang ditempel user
+  referenceImages: z
+    .array(z.string().url().max(500).refine((v) => /^https?:\/\//.test(v), "http(s) only"))
+    .max(5)
+    .optional()
+    .default([]),
 });
 
 export async function POST(req: Request) {
@@ -26,17 +32,25 @@ export async function POST(req: Request) {
         description: data.description,
         budgetUsd: data.budgetUsd ?? null,
         timeline: data.timeline,
+        referenceImages: data.referenceImages.length > 0 ? data.referenceImages : undefined,
         status: "NEW",
       },
     });
 
     // Notifikasi admin (best-effort — jangan gagalkan submit bila email error)
+    const refsHtml =
+      data.referenceImages.length > 0
+        ? `<p>References:<br/>${data.referenceImages
+            .map((u) => `<a href="${u.replace(/"/g, "%22")}">${u.replace(/</g, "&lt;")}</a>`)
+            .join("<br/>")}</p>`
+        : "";
     await sendMail({
       to: process.env.ADMIN_EMAIL ?? site.email,
       subject: `New custom order inquiry — ${data.serviceType.toLowerCase()} from ${data.name}`,
       html: `<p><b>${data.name}</b> (${data.email})</p>
              <p>Service: <b>${data.serviceType}</b> · Budget: ${data.budgetUsd ? "$" + data.budgetUsd : "—"} · Timeline: ${data.timeline || "—"}</p>
              <p>${data.description.replace(/</g, "&lt;").replace(/\n/g, "<br/>")}</p>
+             ${refsHtml}
              <p><a href="${site.url}/admin/custom-orders">Open admin inbox</a></p>`,
     }).catch(() => undefined);
 

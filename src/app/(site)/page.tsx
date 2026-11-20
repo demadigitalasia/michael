@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import ReactDOM from "react-dom";
 import { ProductCard } from "@/components/product-card";
+import { ArrowRight } from "@/components/icons";
 import { Reveal } from "@/components/reveal";
 import { Lookbook } from "@/components/lookbook";
 import { CustomFlow } from "@/components/custom-flow";
@@ -9,13 +10,14 @@ import { ProcessSteps } from "@/components/process-steps";
 import { NewsletterForm } from "@/components/newsletter-form";
 import { StatsCounters } from "@/components/stats-counters";
 import { Ticker } from "@/components/ticker";
+import { lookbookPhoto } from "@/lib/product-listing";
 import { StatusBadge } from "@/components/status-badge";
 import { countByCategory, getFeatured, listProducts } from "@/lib/products";
 import { prisma } from "@/lib/prisma";
 import { getSettings } from "@/lib/settings";
 import { categories, formatUsd, site } from "@/lib/site";
 
-const HERO_IMG = "/editorial/hero-blue-opal-rough.webp";
+const HERO_IMG = "/editorial/hero-lapidary-workbench.webp";
 
 /** ISR: katalog berubah saat admin publish — revalidasi tiap 30 detik. */
 export const revalidate = 30;
@@ -104,10 +106,7 @@ export default async function HomePage() {
     ...(settings.instagramUrl ? { sameAs: [settings.instagramUrl] } : {}),
   };
 
-  const lookbookPhotos = latest.slice(0, 8).map((p) => ({
-    src: p.images[0]?.url ?? HERO_IMG,
-    caption: `${p.stoneType}${p.origin ? ", " + p.origin.split(",").pop()?.trim() : ""}`,
-  }));
+  const lookbookPhotos = latest.flatMap(lookbookPhoto);
 
   return (
     <>
@@ -116,21 +115,22 @@ export default async function HomePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
       {/* 1 · Hero */}
       <section className="relative min-h-[92svh] overflow-hidden">
-        <Image src={HERO_IMG} alt="Blue-green rough stone with a broad exposed face and pale host rock on a lapidary workbench" fill priority sizes="100vw" className="object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink/45 via-transparent to-ink/10" />
+        <Image src={HERO_IMG} alt="Lapidary artisan hand-polishing a blue-green opal cabochon on a water-cooled diamond wheel" fill priority sizes="100vw" className="object-cover object-[78%_50%] md:object-[62%_50%]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/40 to-ink/10 lg:from-ink/55 lg:via-transparent" />
+        <div className="absolute inset-0 hidden bg-gradient-to-r from-ink/65 via-ink/40 to-transparent lg:block" />
         <div className="relative mx-auto flex min-h-[92svh] max-w-7xl flex-col justify-end px-4 pb-16 sm:px-6 lg:px-12">
-          <h1 className="display text-milk text-[clamp(64px,12vw,160px)] leading-[0.95]">
+          <h1 className="display text-milk text-[clamp(48px,12vw,160px)] leading-[0.95]">
             Cut by hand
             <br />
             Kept for life.
           </h1>
-          <div className="mt-8 flex flex-col justify-between gap-8 md:flex-row md:items-end">
-            <p className="body-muted-dark max-w-[46ch] text-lg leading-relaxed text-milk/90">
-              {site.description} Every stone is finished at the bench, photographed as it is, and sold once — to one person.
+          <div className="mt-6 flex flex-col justify-between gap-5 md:mt-8 md:gap-8 md:flex-row md:items-end">
+            <p className="max-w-[46ch] text-base leading-relaxed text-milk md:text-lg">
+              Handcut cabochons, slabs, and rough. One stone at a time.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link href="/shop" className="inline-flex h-[46px] items-center gap-2.5 rounded-full bg-ink px-5 text-[15px] font-medium text-milk transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.97]">
-                Shop new arrivals <span aria-hidden>→</span>
+                Browse the catalog <ArrowRight className="size-4" aria-hidden="true" />
               </Link>
               <Link href="/custom" className="inline-flex h-[46px] items-center gap-2.5 rounded-full border border-milk/60 px-5 text-[15px] font-medium text-milk backdrop-blur-[6px] transition-colors duration-200 hover:bg-milk/10">
                 Start a custom piece
@@ -141,12 +141,12 @@ export default async function HomePage() {
         {/* Annotation callouts — chip gelap agar terbaca di foto terang */}
         <div className="eyebrow absolute right-[6%] top-[22%] hidden lg:block">
           <span className="inline-block rounded-[4px] bg-ink/45 px-3 py-2 text-milk backdrop-blur-[4px]">
-            <span className="text-gold">01</span> — Blue-green opal · rough in matrix
+            <span className="text-gold">01</span> — Blue-green opal · at the wheel
           </span>
         </div>
         <div className="eyebrow absolute bottom-[38%] right-[12%] hidden lg:block">
           <span className="inline-block rounded-[4px] bg-ink/45 px-3 py-2 text-milk backdrop-blur-[4px]">
-            <span className="text-gold">02</span> — Slabbed, ground & polished at our bench
+            <span className="text-gold">02</span> — Hand-finished at our bench
           </span>
         </div>
       </section>
@@ -157,7 +157,7 @@ export default async function HomePage() {
           <div className="grid items-center gap-10 lg:grid-cols-[1.15fr_1fr]">
             <Reveal>
               <div className="relative overflow-hidden rounded-[4px] bg-phold">
-                <div className="aspect-[4/3]">
+                <div className="relative aspect-[4/3]">
                   <Image
                     src={featured.images[0]?.url ?? HERO_IMG}
                     alt={featured.title}
@@ -167,7 +167,7 @@ export default async function HomePage() {
                   />
                 </div>
                 <div className="absolute left-3 top-3">
-                  <StatusBadge status={featured.status as never} />
+                  <StatusBadge status={featured.status} />
                 </div>
               </div>
             </Reveal>
@@ -176,13 +176,27 @@ export default async function HomePage() {
               <h2 className="display mt-3 text-[clamp(40px,5vw,72px)] text-ink">{featured.title}</h2>
               <p className="body-muted mt-5 max-w-[46ch] text-[17px] leading-relaxed">{featured.description}</p>
               <p className="mt-6 font-mono text-[13px] text-ink/60">
-                {featured.stoneType} · {featured.weightCarat ?? featured.weightGram} {featured.weightCarat ? "ct" : "g"} · ships in 1–2 days
+                {featured.stoneType}
+                {featured.weightCarat
+                  ? ` · ${featured.weightCarat} ct`
+                  : featured.weightGram
+                    ? ` · ${featured.weightGram.toLocaleString("en-US")} g`
+                    : ""}
+                {" · ships in 1–2 days"}
               </p>
               <div className="mt-6 flex items-baseline gap-6">
                 <p className="font-display text-4xl font-bold tracking-tight text-ink">{formatUsd(featured.priceCents)}</p>
                 <Link href={`/products/${featured.slug}`} className="inline-flex items-center gap-2 text-[15px] font-medium text-ink underline decoration-gold decoration-2 underline-offset-4 transition-colors hover:text-gold">
-                  View the stone <span aria-hidden>→</span>
+                  View the stone <ArrowRight className="size-4" aria-hidden="true" />
                 </Link>
+              </div>
+              {/* Badge nilai (DESIGN-SPEC §6.2) */}
+              <div className="mt-6 flex flex-wrap gap-2">
+                {["100% treatment disclosed", "Ships insured worldwide", "14-day returns", "One of a kind"].map((b) => (
+                  <span key={b} className="eyebrow inline-flex h-7 items-center rounded-full border border-ink/15 px-3 text-ink/70">
+                    {b}
+                  </span>
+                ))}
               </div>
             </Reveal>
           </div>
@@ -200,8 +214,8 @@ export default async function HomePage() {
             <Reveal key={c.slug} delay={i * 90}>
               <Link href={`/collections#${c.slug}`} className="group block rounded-[4px] border border-ink/10 p-5 transition-colors duration-200 hover:border-ink/30">
                 <p className="display text-2xl text-ink">{c.label}</p>
-                <p className="eyebrow mt-2 text-ink/60">{counts[c.key] ?? 0} pieces</p>
-                <span className="mt-8 inline-block text-ink transition-transform duration-200 group-hover:translate-x-1" aria-hidden>→</span>
+                <p className="eyebrow mt-2 text-ink/60">{counts[c.key] ?? 0} listings</p>
+                <ArrowRight className="mt-8 block size-4 text-ink transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true" />
               </Link>
             </Reveal>
           ))}
@@ -211,19 +225,23 @@ export default async function HomePage() {
       {/* 4 · Grid terbaru */}
       <section className="mx-auto max-w-7xl px-4 pb-[clamp(64px,9vh,110px)] sm:px-6 lg:px-12">
         <Reveal>
-          <p className="eyebrow text-ink/60">Just cut</p>
-          <h2 className="display mt-3 text-[clamp(44px,5.4vw,84px)] text-ink">Fresh off the wheels</h2>
+          <h2 className="display text-[clamp(44px,5.4vw,84px)] text-ink">From the catalog</h2>
         </Reveal>
-        <div className="mt-10 grid grid-cols-1 gap-x-4 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-10 grid grid-cols-1 gap-x-4 gap-y-10 min-[400px]:grid-cols-2 lg:grid-cols-4">
           {latest.map((p, i) => (
             <Reveal key={p.id} delay={(i % 4) * 90}>
               <ProductCard product={p} eager={i < 4} />
             </Reveal>
           ))}
         </div>
+        {latest.length === 0 && (
+          <p className="body-muted mt-6 max-w-[54ch] text-[15px] leading-relaxed">
+            No physical stones are listed at the moment. <Link href="/material-studies" className="text-ink underline decoration-gold underline-offset-4">Browse the material studies</Link> while the next pieces are being prepared.
+          </p>
+        )}
         <Reveal className="mt-10">
           <Link href="/shop" className="inline-flex items-center gap-2 text-[15px] font-medium text-ink underline decoration-gold decoration-2 underline-offset-4 hover:text-gold">
-            All pieces <span aria-hidden>→</span>
+            All pieces <ArrowRight className="size-4" aria-hidden="true" />
           </Link>
         </Reveal>
       </section>
@@ -248,21 +266,24 @@ export default async function HomePage() {
         ]}
       />
 
-      {/* 8 · Transparency stats */}
-      <section className="mx-auto max-w-7xl px-4 pb-[clamp(72px,10vh,120px)] sm:px-6 lg:px-12">
-        <Reveal>
-          <p className="eyebrow text-ink/60">Materials & ethics</p>
-          <h2 className="display mt-3 text-[clamp(44px,5.4vw,84px)] text-ink">Nothing hidden, nothing guessed</h2>
-        </Reveal>
-        <div className="mt-10">
-          <StatsCounters
-            stats={[
-              { value: 100, suffix: "%", label: "Treatment disclosed", note: "Dyed or stabilized is written in the listing — every time, no exceptions." },
-              { value: 412, label: "Stones cut last year", note: "By one pair of hands at one set of wheels, one stone at a time." },
-              { value: 9, suffix: " h", label: "Hours per cabochon", note: "From the first sketch around the banding to the last pass on the leather." },
-              { value: 0, label: "Undisclosed treatments", note: "We would rather lose the sale than the trust." },
-            ]}
-          />
+      {/* 8 · Transparency stats — strip gelap (ritme referensi: bench → stats → footer) */}
+      <section className="bg-ink py-[clamp(72px,10vh,120px)] text-milk">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-12">
+          <Reveal>
+            <p className="eyebrow text-milk/60">Materials & ethics</p>
+            <h2 className="display mt-3 text-[clamp(44px,5.4vw,84px)] text-milk">Nothing hidden, nothing guessed</h2>
+          </Reveal>
+          <div className="mt-10">
+            <StatsCounters
+              dark
+              stats={[
+                { value: 100, suffix: "%", label: "Treatment disclosed", note: "Dyed or stabilized is written in the listing — every time, no exceptions." },
+                { value: 412, label: "Stones cut last year", note: "By one pair of hands at one set of wheels, one stone at a time." },
+                { value: 9, suffix: " h", label: "Hours per cabochon", note: "From the first sketch around the banding to the last pass on the leather." },
+                { value: 0, label: "Undisclosed treatments", note: "We would rather lose the sale than the trust." },
+              ]}
+            />
+          </div>
         </div>
       </section>
 
@@ -286,7 +307,7 @@ export default async function HomePage() {
           </div>
           <Reveal className="mt-10">
             <Link href="/care" className="inline-flex items-center gap-2 text-[15px] font-medium text-ink underline decoration-gold decoration-2 underline-offset-4 hover:text-gold">
-              Care guides & policies <span aria-hidden>→</span>
+              Care guides & policies <ArrowRight className="size-4" aria-hidden="true" />
             </Link>
           </Reveal>
         </div>

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { getCartItems, getCartToken, ensureCart, releaseProduct } from "@/lib/cart";
+import { getCartItems, getCartToken, ensureCart, releaseProduct, reserveProduct } from "@/lib/cart";
+import { effectiveStatus } from "@/lib/products";
+import { shipmentWeightGrams, validRates } from "@/lib/shipping";
 import { prisma } from "@/lib/prisma";
 import { site } from "@/lib/site";
 import { z } from "zod";
@@ -35,8 +37,43 @@ export async function POST(req: Request) {
     const items = await getCartItems(token);
     if (items.length === 0) return NextResponse.json({ error: "Bag is empty" }, { status: 400 });
 
+    // Status diperiksa per item: SOLD/tersembunyi ditolak; hold kedaluwarsa di-re-reserve.
+    const invalid: { id: string; title: string }[] = [];
+    for (const item of items) {
+      const p = await prisma.product.findUnique({
+        where: { id: item.productId },
+        select: { status: true, reservedUntil: true },
+      });
+      if (!p || ["SOLD", "DRAFT", "HIDDEN"].includes(effectiveStatus(p))) {
+        invalid.push({ id: item.productId, title: item.title });
+        continue;
+      }
+      if (effectiveStatus(p) === "AVAILABLE") {
+        const ok = await reserveProduct(item.productId); // AVAILABLE / hold kedaluwarsa
+        if (!ok) invalid.push({ id: item.productId, title: item.title });
+      }
+    }
+    if (invalid.length > 0) {
+      // Bersihkan item invalid dari cart agar UI tidak lagi menawarkan barang yang hilang
+      await prisma.cartItem.deleteMany({
+        where: { cart: { token }, productId: { in: invalid.map((i) => i.id) } },
+      });
+      return NextResponse.json(
+        { error: `No longer available: ${invalid.map((i) => i.title).join(", ")}` },
+        { status: 409 },
+      );
+    }
+
+    // Tarif harus cocok zona alamat & window berat — aturan sama dengan UI (lib/shipping)
     const rate = await prisma.shippingRate.findFirst({ where: { id: body.rateId, active: true } });
     if (!rate) return NextResponse.json({ error: "Invalid shipping rate" }, { status: 400 });
+    const totalGrams = shipmentWeightGrams(items);
+    if (validRates([rate], body.country, totalGrams).length === 0) {
+      return NextResponse.json(
+        { error: "That shipping option doesn't match your address or parcel weight" },
+        { status: 400 },
+      );
+    }
 
     const subtotal = items.reduce((s, i) => s + i.priceCents, 0);
     const number = orderNumber();

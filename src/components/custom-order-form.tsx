@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ArrowRight } from "@/components/icons";
 
 /**
  * Form Custom Order (PRD F-17) → POST /api/custom-orders → tersimpan ke DB
@@ -13,6 +14,12 @@ export function CustomOrderForm() {
     e.preventDefault();
     const form = e.currentTarget;
     const fd = new FormData(form);
+    // Reference links: satu URL per baris (maks 5) — tanpa upload anonim
+    const referenceImages = String(fd.get("referenceImages") ?? "")
+      .split(/[\n,]+/)
+      .map((s) => s.trim())
+      .filter((s) => /^https?:\/\/\S+/.test(s))
+      .slice(0, 5);
     setState("sending");
     try {
       const res = await fetch("/api/custom-orders", {
@@ -25,6 +32,7 @@ export function CustomOrderForm() {
           description: fd.get("description"),
           budgetUsd: fd.get("budgetUsd") || null,
           timeline: fd.get("timeline"),
+          referenceImages,
         }),
       });
       if (!res.ok) throw new Error();
@@ -84,13 +92,23 @@ export function CustomOrderForm() {
         <span className="eyebrow text-ink/60">What are you thinking of?</span>
         <textarea name="description" required rows={5} className="rounded-[4px] border border-ink/20 bg-transparent p-4 text-[15px] leading-relaxed text-ink focus:outline-none focus:ring-1 focus:ring-gold" />
       </label>
+      <label className="grid gap-1.5">
+        <span className="eyebrow text-ink/60">Reference links (optional)</span>
+        <textarea
+          name="referenceImages"
+          rows={2}
+          placeholder={"Links to sketches or photos that inspire the piece — one per line, up to 5\nhttps://…"}
+          className="rounded-[4px] border border-ink/20 bg-transparent p-4 text-[15px] leading-relaxed text-ink focus:outline-none focus:ring-1 focus:ring-gold"
+        />
+        <span className="eyebrow text-ink/40">Paste image URLs (Google Drive, Imgur, …) — no upload needed</span>
+      </label>
       <div className="flex flex-wrap items-center gap-4">
         <button
           type="submit"
           disabled={state === "sending"}
           className="inline-flex h-[46px] items-center gap-2.5 rounded-full bg-ink px-5 text-[15px] font-medium text-milk transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.97] disabled:opacity-60"
         >
-          {state === "sending" ? "Sending…" : "Send it to the bench"} <span aria-hidden>→</span>
+          {state === "sending" ? "Sending…" : "Send it to the bench"} <ArrowRight className="size-4" aria-hidden="true" />
         </button>
         <p className="eyebrow text-ink/50">We never share your details. Replies within two working days.</p>
       </div>

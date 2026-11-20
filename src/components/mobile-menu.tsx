@@ -1,68 +1,80 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand-logo";
+import { Menu, X } from "@/components/icons";
 
-/** Menu full-screen gelap untuk mobile — gaya referensi (bg bench, link Antonio besar). */
 export function MobileMenu({ links }: { links: { href: string; label: string }[] }) {
   const [open, setOpen] = useState(false);
+  const dialog = useRef<HTMLDialogElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const closeButton = useRef<HTMLButtonElement>(null);
+  const dialogId = useId();
+
+  useEffect(() => {
+    const desktop = matchMedia("(min-width: 64rem)");
+    const closeOnDesktop = () => {
+      if (desktop.matches) dialog.current?.close();
+    };
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => desktop.removeEventListener("change", closeOnDesktop);
+  }, []);
 
   return (
     <>
       <button
-        onClick={() => setOpen(true)}
+        ref={trigger}
+        type="button"
+        onClick={() => {
+          dialog.current?.showModal();
+          closeButton.current?.focus();
+          setOpen(true);
+        }}
         className="flex size-11 items-center justify-center rounded-full border border-white/55 bg-[rgba(240,237,231,0.7)] backdrop-blur-[18px] lg:hidden"
         aria-label="Open menu"
+        aria-haspopup="dialog"
+        aria-controls={dialogId}
+        aria-expanded={open}
       >
-        <span className="flex w-5 flex-col gap-[5px]">
-          <span className="h-px w-full bg-ink" />
-          <span className="h-px w-full bg-ink" />
-        </span>
+        <Menu aria-hidden="true" className="size-5" strokeWidth={1.7} />
       </button>
 
-      {open && (
-        <div
-          className="fixed inset-0 z-[60] flex flex-col bg-bench px-6 pb-8 pt-5 text-milk"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="flex items-center justify-between">
-            <BrandLogo tone="light" size="large" />
-            <button
-              onClick={() => setOpen(false)}
-              className="flex size-11 items-center justify-center rounded-full border border-milk/30"
-              aria-label="Close menu"
-            >
-              ✕
-            </button>
-          </div>
-          <nav className="mt-14 flex flex-col" aria-label="Mobile">
-            {links.map((l, i) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                onClick={() => setOpen(false)}
-                className="group flex items-baseline gap-4 border-t border-milk/12 py-4"
-              >
-                <span className="eyebrow text-milk/50">{String(i + 1).padStart(2, "0")}</span>
-                <span className="display text-4xl text-milk transition-colors group-hover:text-gold">
-                  {l.label}
-                </span>
-              </Link>
-            ))}
-            <Link
-              href="/cart"
-              onClick={() => setOpen(false)}
-              className="group flex items-baseline gap-4 border-t border-milk/12 py-4"
-            >
-              <span className="eyebrow text-milk/50">07</span>
-              <span className="display text-4xl text-milk transition-colors group-hover:text-gold">Bag</span>
-            </Link>
-          </nav>
-          <p className="mt-auto eyebrow text-milk/50">One stone at a time</p>
+      <dialog
+        ref={dialog}
+        id={dialogId}
+        aria-label="Site menu"
+        onClose={() => {
+          setOpen(false);
+          trigger.current?.focus();
+        }}
+        className="mobile-nav-dialog fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none overflow-y-auto overscroll-contain border-0 bg-bench px-6 pb-6 pt-5 text-milk"
+      >
+        <div className="flex items-center justify-between gap-4">
+          <BrandLogo tone="light" size="large" />
+          <button
+            ref={closeButton}
+            type="button"
+            onClick={() => dialog.current?.close()}
+            className="flex size-11 shrink-0 items-center justify-center rounded-full border border-milk/30 focus-visible:outline-milk"
+            aria-label="Close menu"
+          >
+            <X aria-hidden="true" className="size-5" strokeWidth={1.7} />
+          </button>
         </div>
-      )}
+        <nav className="mt-7 flex flex-col [@media(min-height:680px)]:mt-14" aria-label="Mobile">
+          {[...links, { href: "/cart", label: "Bag" }].map(({ href, label }) => (
+            <Link
+              key={href}
+              href={href}
+              onClick={() => dialog.current?.close()}
+              className="display border-t border-milk/12 py-3 text-[clamp(27px,8vw,36px)] text-milk transition-colors hover:text-gold focus-visible:outline-milk [@media(min-height:680px)]:py-4"
+            >
+              {label}
+            </Link>
+          ))}
+        </nav>
+      </dialog>
     </>
   );
 }

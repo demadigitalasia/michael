@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useState, useEffect } from "react";
-import { useScroll, useReducedMotion } from "framer-motion";
+import { useRef, useState, useEffect, type CSSProperties } from "react";
+import { useScroll } from "framer-motion";
+import { ArrowRight } from "@/components/icons";
 
 export type FlowStep = { title: string; body: string; meta: string };
 
@@ -33,7 +34,6 @@ export function CustomFlow({
 }) {
   const sectionRef = useRef<HTMLElement>(null);
   const [step, setStep] = useState(0);
-  const reduce = useReducedMotion();
   const n = steps.length;
 
   const { scrollYProgress } = useScroll({
@@ -42,18 +42,17 @@ export function CustomFlow({
   });
 
   useEffect(() => {
-    if (reduce) return;
     const unsub = scrollYProgress.on("change", (t) => {
       const idx = Math.min(n - 1, Math.floor(t * n * 0.999));
       setStep(idx);
     });
     return () => unsub();
-  }, [scrollYProgress, n, reduce]);
+  }, [scrollYProgress, n]);
 
   return (
-    <section ref={sectionRef} aria-label={title} className="relative bg-paper" style={{ height: `${n * 90}vh` }}>
-      <div className="sticky top-0 flex min-h-[620px] h-screen items-center overflow-hidden">
-        <div className="grid w-full grid-cols-1 gap-[clamp(24px,4vw,72px)] px-[clamp(16px,3.4vw,48px)] pb-[clamp(20px,3vh,32px)] pt-[clamp(80px,10vh,104px)] lg:grid-cols-[minmax(320px,5fr)_7fr]">
+    <section ref={sectionRef} aria-label={title} className="relative bg-paper editorial-motion:h-[var(--flow-height)]" style={{ "--flow-height": `${n * 80}svh` } as CSSProperties}>
+      <div className="editorial-motion:sticky editorial-motion:top-0 editorial-motion:flex editorial-motion:h-svh editorial-motion:items-center editorial-motion:overflow-clip">
+        <div className="grid w-full grid-cols-1 gap-[clamp(24px,4vw,72px)] px-[clamp(16px,3.4vw,48px)] py-12 editorial-motion:grid-cols-[minmax(320px,5fr)_7fr] editorial-motion:pb-6 editorial-motion:pt-20">
           {/* Kiri: langkah */}
           <div>
             <p className="eyebrow text-ink/60">{kicker}</p>
@@ -65,21 +64,19 @@ export function CustomFlow({
                 return (
                   <li
                     key={s.title}
-                    data-on={on}
-                    className="grid grid-cols-[44px_1fr] gap-x-3 gap-y-1 border-t border-ink/14 py-3 transition-opacity duration-500 ease-[cubic-bezier(.22,1,.36,1)]"
-                    style={{ opacity: on ? 1 : 0.42 }}
+                    className="grid grid-cols-[44px_1fr] gap-x-3 gap-y-1 border-t border-ink/14 py-3 editorial-motion:opacity-[var(--step-opacity)] editorial-motion:transition-opacity editorial-motion:duration-500"
+                    style={{ "--step-opacity": on ? 1 : 0.58, "--step-height": on ? "125px" : "0px", "--step-gap": on ? "6px" : "0px" } as CSSProperties}
                   >
                     <span className="eyebrow row-span-2 pt-1 text-ink/60">{String(i + 1).padStart(2, "0")}</span>
                     <h3 className="text-[19px] font-semibold leading-tight text-ink">{s.title}</h3>
                     {/* accordion body: max-height .7s */}
                     <p
-                      className="col-start-2 m-0 overflow-hidden text-[14.5px] leading-normal body-muted transition-[max-height,margin] duration-700 ease-[cubic-bezier(.22,1,.36,1)]"
-                      style={{ maxHeight: on ? 120 : 0, marginTop: on ? 6 : 0 }}
+                      className="body-muted col-start-2 m-0 text-[14.5px] leading-normal editorial-motion:mt-[var(--step-gap)] editorial-motion:max-h-[var(--step-height)] editorial-motion:overflow-hidden editorial-motion:transition-[max-height,margin] editorial-motion:duration-700"
                     >
                       {s.body}
                     </p>
                     <span className="eyebrow col-start-2 mt-1 text-ink/60">{s.meta}</span>
-                    <i className="col-span-full mt-3 block h-0.5 overflow-hidden bg-ink/8">
+                    <i aria-hidden className="col-span-full mt-3 hidden h-0.5 overflow-hidden bg-ink/8 editorial-motion:block">
                       <span
                         className="block h-full origin-left bg-ink transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)]"
                         style={{ transform: `scaleX(${progress})` }}
@@ -93,12 +90,12 @@ export function CustomFlow({
               href={ctaHref}
               className="mt-6 inline-flex h-[46px] items-center gap-2.5 rounded-full bg-ink px-5 text-[15px] font-medium text-milk transition-transform duration-200 ease-[cubic-bezier(.22,1,.36,1)] hover:-translate-y-0.5 active:scale-[0.97]"
             >
-              {ctaLabel} <span aria-hidden>→</span>
+              {ctaLabel} <ArrowRight className="size-4" aria-hidden="true" />
             </a>
           </div>
 
           {/* Kanan: stage lembar sketsa */}
-          <div className="relative hidden h-[min(70vh,660px)] overflow-hidden rounded-[6px] bg-sketch shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_40px_80px_-50px_rgba(40,30,20,0.45)] lg:block">
+          <div className="relative hidden h-[min(70vh,660px)] overflow-hidden rounded-[6px] bg-sketch shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_40px_80px_-50px_rgba(40,30,20,0.45)] editorial-motion:block">
             <div
               aria-hidden
               className="absolute inset-0"

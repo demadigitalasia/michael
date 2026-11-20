@@ -1,4 +1,5 @@
 import { Reveal } from "@/components/reveal";
+import { Plus } from "@/components/icons";
 
 export const metadata = {
   title: "Care & repairs",
@@ -125,7 +126,7 @@ export default function CarePage() {
           {FAQ.map((f) => (
             <details key={f.q} className="group border-b border-ink/10 py-4" open={f === FAQ[0]}>
               <summary className="flex cursor-pointer list-none items-center justify-between text-[17px] font-semibold text-ink">
-                {f.q} <span className="transition-transform group-open:rotate-45" aria-hidden>+</span>
+                {f.q} <Plus className="size-4 transition-transform group-open:rotate-45" aria-hidden="true" />
               </summary>
               <p className="body-muted mt-3 max-w-[60ch] text-[14.5px] leading-relaxed">{f.a}</p>
             </details>

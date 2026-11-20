@@ -1,6 +1,7 @@
 import { Reveal } from "@/components/reveal";
 import { Ticker } from "@/components/ticker";
 import Link from "next/link";
+import { ArrowRight } from "@/components/icons";
 
 export const metadata = {
   title: "Journal",
@@ -32,15 +33,13 @@ export default function JournalPage() {
         <div className="mt-14 grid gap-x-8 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
           {POSTS.map((p, i) => (
             <Reveal key={p.title} delay={(i % 3) * 90}>
-              <article className="group border-t border-ink/15 pt-5">
+              {/* Fase 1: artikel statis belum ada → kartu pasif, tanpa affordance klik palsu */}
+              <article className="border-t border-ink/15 pt-5">
                 <p className="eyebrow text-ink/60">{p.tag} · {p.read}</p>
-                <h2 className="mt-3 text-[19px] font-semibold leading-snug text-ink transition-colors group-hover:text-gold">
+                <h2 className="mt-3 text-[19px] font-semibold leading-snug text-ink">
                   {p.title}
                 </h2>
                 <p className="body-muted mt-2 text-[14.5px] leading-normal">{p.excerpt}</p>
-                <span className="eyebrow mt-4 inline-block text-ink/50 transition-transform duration-200 group-hover:translate-x-1">
-                  Read <span aria-hidden>→</span>
-                </span>
               </article>
             </Reveal>
           ))}
@@ -61,7 +60,7 @@ export default function JournalPage() {
               </p>
             </div>
             <Link href="/contact" className="inline-flex h-[46px] items-center gap-2.5 justify-self-start rounded-full bg-ink px-5 text-[15px] font-medium text-milk transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.97] md:justify-self-end">
-              Ask the bench <span aria-hidden>→</span>
+              Ask the bench <ArrowRight className="size-4" aria-hidden="true" />
             </Link>
           </div>
         </Reveal>

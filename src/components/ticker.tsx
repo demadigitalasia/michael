@@ -1,6 +1,4 @@
-import { site } from "@/lib/site";
-
-void site; // dipakai nanti untuk konfigurasi item via site config
+import { Sparkles } from "@/components/icons";
 
 /**
  * Ticker — port JwTicker (MOTION-SPEC §2.1):
@@ -27,7 +25,7 @@ export function Ticker({
       {items.map((item, i) => (
         <span key={i} className="flex items-center" style={{ gap: size * 0.6 }}>
           <span className="whitespace-nowrap">{item}</span>
-          <span style={{ fontSize: size * 0.42, color: "var(--color-oxide)", transform: "translateY(-0.1em)" }}>✦</span>
+          <Sparkles aria-hidden="true" className="shrink-0" style={{ width: size * 0.42, height: size * 0.42, color: "var(--color-oxide)", transform: "translateY(-0.1em)" }} strokeWidth={1.5} />
         </span>
       ))}
     </div>
@@ -47,10 +45,3 @@ export function Ticker({
     </div>
   );
 }
-
-export function SiteTicker() {
-  return <Ticker />;
-}
-
-// keep import used
-void site;

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowRight } from "@/components/icons";
 
 /**
  * Tombol Add to Bag — memanggil /api/cart/items (mereview produk: AVAILABLE → RESERVED,
@@ -11,10 +12,12 @@ export function AddToBag({
   productId,
   disabled,
   status,
+  compact = false,
 }: {
   productId: string;
   disabled: boolean;
   status: string;
+  compact?: boolean;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -24,7 +27,7 @@ export function AddToBag({
     return (
       <button
         disabled
-        className="inline-flex h-[52px] w-full cursor-not-allowed items-center justify-center rounded-full bg-ink/20 text-[15px] font-medium text-ink/50"
+        className={`inline-flex w-full cursor-not-allowed items-center justify-center rounded-full bg-ink/20 font-medium text-ink/50 ${compact ? "h-10 text-[13px]" : "h-[52px] text-[15px]"}`}
       >
         Sold — one of a kind
       </button>
@@ -62,12 +65,12 @@ export function AddToBag({
       <button
         onClick={add}
         disabled={loading || disabled}
-        className="inline-flex h-[52px] w-full items-center justify-center gap-2.5 rounded-full bg-ink text-[15px] font-medium text-milk transition-transform duration-200 ease-[cubic-bezier(.22,1,.36,1)] hover:-translate-y-0.5 active:scale-[0.97] disabled:opacity-60"
+        className={`inline-flex w-full items-center justify-center gap-2.5 rounded-full bg-ink font-medium text-milk transition-transform duration-200 ease-[cubic-bezier(.22,1,.36,1)] hover:-translate-y-0.5 active:scale-[0.97] disabled:opacity-60 ${compact ? "h-10 text-[13px]" : "h-[52px] text-[15px]"}`}
       >
-        {loading ? "Reserving…" : `${label} →`}
+        {loading ? "Reserving…" : <>{label} <ArrowRight className="size-4" aria-hidden="true" /></>}
       </button>
       {error && <p className="mt-2 text-[13px] text-oxide">{error}</p>}
-      {!error && status !== "RESERVED" && (
+      {!compact && !error && status !== "RESERVED" && (
         <p className="eyebrow mt-3 text-ink/50">Held for 30 minutes once in your bag</p>
       )}
     </div>

@@ -1,27 +1,15 @@
-import Image from "next/image";
-
 type BrandLogoProps = {
   tone?: "dark" | "light";
   size?: "compact" | "large";
 };
 
-/** Faceted-stone emblem with a responsive, readable wordmark. */
+/**
+ * Lockup resmi tunggal: emblem batu faceted + wordmark dua baris (SVG, vektor).
+ * Dipakai identik di header (tone dark) dan footer (tone light) — satu identitas,
+ * sesuai audit kerapihan r4 ("satu logo"). Aksen emas tetap #c9a24e di kedua tone.
+ */
 export function BrandLogo({ tone = "dark", size = "compact" }: BrandLogoProps) {
   const large = size === "large";
-
-  if (tone === "dark") {
-    return (
-      <Image
-        src="/brand/michael-lapidary-option-1.png"
-        alt=""
-        width={2076}
-        height={757}
-        priority
-        sizes="(min-width: 1024px) 174px, 120px"
-        className={large ? "h-auto w-[174px]" : "h-auto w-[120px]"}
-      />
-    );
-  }
 
   return (
     <span className={`inline-flex items-center ${large ? "gap-3" : "gap-2.5"}`}>

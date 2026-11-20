@@ -2,6 +2,9 @@ import { cookies } from "next/headers";
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { site } from "@/lib/site";
+import { physicalListingWhere } from "@/lib/product-listing";
+
+const purchasableListing = physicalListingWhere;
 
 const CART_COOKIE = "ml_cart";
 
@@ -33,11 +36,13 @@ export async function getCartItems(token: string | null) {
   if (!token) return [] as Array<{
     productId: string; slug: string; title: string; priceCents: number;
     image: string | null; reservedUntil: Date | null;
+    weightGram: number | null; weightCarat: number | null;
   }>;
   const cart = await prisma.cart.findUnique({
     where: { token },
     include: {
       items: {
+        where: { product: purchasableListing },
         include: { product: { include: { images: { orderBy: { sortOrder: "asc" } } } } },
       },
     },
@@ -50,6 +55,8 @@ export async function getCartItems(token: string | null) {
     priceCents: i.product.priceCents,
     image: i.product.images[0]?.url ?? null,
     reservedUntil: i.product.reservedUntil,
+    weightGram: i.product.weightGram,
+    weightCarat: i.product.weightCarat,
   }));
 }
 
@@ -57,8 +64,7 @@ export async function getCartCount(): Promise<number> {
   try {
     const token = await getCartToken();
     if (!token) return 0;
-    const cart = await prisma.cart.findUnique({ where: { token }, include: { items: true } });
-    return cart?.items.length ?? 0;
+    return await prisma.cartItem.count({ where: { cart: { token }, product: purchasableListing } });
   } catch {
     return 0;
   }
@@ -74,9 +80,20 @@ export async function reserveProduct(productId: string): Promise<boolean> {
   const result = await prisma.product.updateMany({
     where: {
       id: productId,
-      OR: [
-        { status: "AVAILABLE" },
-        { status: "RESERVED", reservedUntil: { lte: now } },
+      ...purchasableListing,
+      AND: [
+        {
+          OR: [
+            { weightGram: { not: null } },
+            { weightCarat: { not: null } },
+          ],
+        },
+        {
+          OR: [
+            { status: "AVAILABLE" },
+            { status: "RESERVED", reservedUntil: { lte: now } },
+          ],
+        },
       ],
     },
     data: { status: "RESERVED", reservedUntil },

@@ -27,29 +27,33 @@ export function NewsletterForm() {
   if (state === "sent") {
     return (
       <p className="eyebrow mt-8 text-gold">
-        You're in — your first letter arrives with the next batch. Welcome.
+        You’re in — your first letter arrives with the next batch. Welcome.
       </p>
     );
   }
 
   return (
-    <form onSubmit={submit} className="mt-8 flex max-w-md items-center gap-2">
-      <input
-        type="email"
-        required
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Your email"
-        className="h-[46px] w-full rounded-full border border-milk/25 bg-transparent px-5 text-[15px] text-milk placeholder:text-milk/40 focus:outline-none focus:ring-1 focus:ring-gold"
-      />
-      <button
-        type="submit"
-        disabled={state === "sending"}
-        className="h-[46px] flex-none rounded-full bg-milk px-5 text-[15px] font-medium text-ink transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.97] disabled:opacity-60"
-      >
-        {state === "sending" ? "…" : "Join"}
-      </button>
-      {state === "error" && <p className="text-[12px] text-oxide">Try again</p>}
-    </form>
+    <div className="mt-8 max-w-md">
+      <form onSubmit={submit} className="flex items-center gap-2">
+        <input
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Your email"
+          className="h-[46px] w-full rounded-full border border-milk/25 bg-transparent px-5 text-[15px] text-milk placeholder:text-milk/40 focus:outline-none focus:ring-1 focus:ring-gold"
+        />
+        <button
+          type="submit"
+          disabled={state === "sending"}
+          className="h-[46px] flex-none rounded-full bg-milk px-5 text-[15px] font-medium text-ink transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.97] disabled:opacity-60"
+        >
+          {state === "sending" ? "…" : "Join"}
+        </button>
+      </form>
+      {state === "error" && (
+        <p className="mt-3 text-[13px] text-oxide">Couldn’t sign you up — try again in a moment.</p>
+      )}
+    </div>
   );
 }

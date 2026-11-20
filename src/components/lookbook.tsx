@@ -1,145 +1,98 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
-import { useScroll, useTransform, useReducedMotion } from "framer-motion";
+import { useEffect, useRef, type CSSProperties } from "react";
+import { useScroll } from "framer-motion";
 
 export type LookbookPhoto = { src: string; caption: string };
 
-/**
- * Lookbook — port JwLookbook (MOTION-SPEC §2.3):
- * Desktop: section di-PIN (sticky 100vh), scroll vertikal menggerakkan track horizontal.
- * - Judul raksasa background: Antonio clamp(120→300px), opacity .08, parallax 0.35×
- * - Gambar: scale(1.18) tetap + parallax horizontal dalam frame
- * - Counter 01/08 + progress bar scaleX
- * - Offset vertikal berjenjang (i%3)*3vh
- * Mobile (<810px): scroll-snap carousel, tanpa pin/parallax.
- */
+const FRAMES = [
+  [34, 43], [48, 34], [38, 46], [50, 33],
+  [34, 44], [52, 36], [38, 46], [48, 34],
+];
+
 export function Lookbook({
   photos,
-  kicker = "From the bench · this season's cuts",
+  kicker = "From the bench · material studies",
   title = "Where they come from",
-  note = "Photographed on the bench where they were cut, beside the rough they came from, and in the hand at life size.",
+  note = "A closer look at the color and texture of the materials.",
 }: {
   photos: LookbookPhoto[];
   kicker?: string;
   title?: string;
   note?: string;
 }) {
-  const sectionRef = useRef<HTMLElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const imgsRef = useRef<(HTMLDivElement | null)[]>([]);
-  const bigRef = useRef<HTMLDivElement>(null);
-  const barRef = useRef<HTMLDivElement>(null);
-  const counterRef = useRef<HTMLSpanElement>(null);
-  const [mobile, setMobile] = useState(false);
-  const reduce = useReducedMotion();
+  const section = useRef<HTMLElement>(null);
+  const frame = useRef<HTMLDivElement>(null);
+  const track = useRef<HTMLDivElement>(null);
+  const counter = useRef<HTMLSpanElement>(null);
+  const bar = useRef<HTMLSpanElement>(null);
+  const ghost = useRef<HTMLSpanElement>(null);
 
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end end"],
-  });
+  const { scrollYProgress } = useScroll({ target: section, offset: ["start start", "end end"] });
 
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 809px)");
-    const apply = () => setMobile(mq.matches);
-    apply();
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
-  }, []);
+    function update(progress: number) {
+      if (!frame.current || !track.current || getComputedStyle(frame.current).position !== "sticky") return;
+      const distance = Math.max(0, track.current.scrollWidth - frame.current.clientWidth);
+      track.current.style.setProperty("--lookbook-offset", `${-progress * distance}px`);
+      ghost.current?.style.setProperty("--lookbook-ghost-offset", `${-progress * distance * 0.25}px`);
+      if (bar.current) bar.current.style.transform = `scaleX(${progress})`;
+      if (counter.current) {
+        const index = Math.min(photos.length, 1 + Math.floor(progress * photos.length));
+        counter.current.textContent = String(index).padStart(2, "0");
+      }
+    }
 
-  // Desktop: drive transforms from scroll progress (rAF pattern port)
-  useEffect(() => {
-    if (mobile || reduce) return;
-    const unsub = scrollYProgress.on("change", (t) => {
-      const track = trackRef.current;
-      const section = sectionRef.current;
-      if (!track || !section) return;
-      const over = Math.max(0, track.scrollWidth - window.innerWidth);
-      track.style.transform = `translate3d(${-t * over}px,0,0)`;
-      if (bigRef.current) bigRef.current.style.transform = `translate3d(${-t * over * 0.35}px,0,0)`;
-      if (barRef.current) barRef.current.style.transform = `scaleX(${t})`;
-      const n = photos.length || 1;
-      if (counterRef.current) counterRef.current.textContent = String(Math.min(n, 1 + Math.floor(t * n * 0.999))).padStart(2, "0");
-      const vw = window.innerWidth;
-      imgsRef.current.forEach((frame) => {
-        if (!frame || !frame.firstElementChild) return;
-        const rect = frame.getBoundingClientRect();
-        const off = (rect.left + rect.width / 2) / vw - 0.5;
-        (frame.firstElementChild as HTMLElement).style.transform = `translate3d(${-off * 8}%,0,0) scale(1.18)`;
-      });
-    });
-    return () => unsub();
-  }, [mobile, reduce, scrollYProgress, photos.length]);
+    const unsubscribe = scrollYProgress.on("change", update);
+    const refresh = () => update(scrollYProgress.get());
+    const observer = new ResizeObserver(refresh);
+    if (frame.current) observer.observe(frame.current);
+    if (track.current) observer.observe(track.current);
+    refresh();
+    return () => {
+      unsubscribe();
+      observer.disconnect();
+    };
+  }, [photos.length, scrollYProgress]);
 
-  if (mobile) {
-    return (
-      <section aria-label={title} className="bg-paper py-10">
-        <div className="px-4">
-          <p className="eyebrow text-ink/60">{kicker}</p>
-          <h2 className="display mt-2 text-[clamp(44px,10vw,84px)] text-ink">{title}</h2>
-          <p className="body-muted mt-3 max-w-[340px] text-[15px] leading-normal">{note}</p>
-        </div>
-        <div className="mt-6 flex snap-x snap-mandatory gap-3.5 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {photos.map((p, i) => (
-            <figure key={i} className="w-[64vw] max-w-[380px] flex-none snap-start">
-              <div className="relative aspect-[3/4] overflow-hidden rounded-[4px] bg-phold">
-                <Image src={p.src} alt={p.caption} fill sizes="64vw" className="object-cover" />
-              </div>
-              <figcaption className="eyebrow mt-3 text-ink/66">
-                <b className="font-medium text-oxide">{String(i + 1).padStart(2, "0")}</b> {p.caption}
-              </figcaption>
-            </figure>
-          ))}
-        </div>
-      </section>
-    );
-  }
+  if (!photos.length) return null;
 
   return (
-    <section ref={sectionRef} aria-label={title} className="relative bg-paper" style={{ height: "300vh" }}>
-      <div className="sticky top-0 h-screen min-h-[560px] overflow-hidden">
-        <div
-          ref={bigRef}
-          aria-hidden
-          className="display pointer-events-none absolute bottom-[clamp(20px,5vh,56px)] left-[clamp(16px,3.4vw,48px)] z-0 whitespace-nowrap text-[clamp(120px,19vw,300px)] leading-[0.8] text-ink opacity-[0.08] will-change-transform"
-        >
-          {title}
-        </div>
-        <div className="absolute inset-x-[clamp(16px,3.4vw,48px)] top-[clamp(96px,14vh,140px)] z-10 flex items-start justify-between gap-6">
+    <section ref={section} aria-label={title} className="lookbook bg-paper">
+      <div ref={frame} className="lookbook-frame">
+        <span ref={ghost} aria-hidden className="lookbook-ghost display">{title}</span>
+        <div className="lookbook-heading">
           <div>
             <p className="eyebrow text-ink/60">{kicker}</p>
             <h2 className="display mt-2 text-[clamp(44px,5.4vw,84px)] text-ink">{title}</h2>
           </div>
-          <p className="body-muted hidden max-w-[340px] text-[15px] leading-normal md:block">{note}</p>
+          <p className="body-muted mt-3 max-w-[32ch] text-[15px] leading-relaxed">{note}</p>
         </div>
-        <div
-          ref={trackRef}
-          className="absolute inset-y-0 left-0 z-[1] flex items-end gap-[clamp(24px,3vw,56px)] pl-[34vw] will-change-transform"
-          style={{ paddingBottom: "13vh" }}
-        >
-          {photos.map((p, i) => (
-            <figure key={i} style={{ marginBottom: (i % 3) * 3 + "vh" }} className="m-0 flex-none">
-              <div
-                ref={(el) => { imgsRef.current[i] = el; }}
-                className="relative overflow-hidden rounded-[4px] bg-phold"
-                style={{ height: "64vh", width: "46vh" }}
-              >
-                <Image src={p.src} alt={p.caption} fill sizes="60vh" loading={i < 3 ? "eager" : "lazy"} className="object-cover will-change-transform" />
-              </div>
-              <figcaption className="eyebrow mt-3 text-ink/66">
-                <b className="font-medium text-oxide">{String(i + 1).padStart(2, "0")}</b> {p.caption}
-              </figcaption>
-            </figure>
-          ))}
+        <div ref={track} className="lookbook-track">
+          {photos.map(({ src, caption }, index) => {
+            const [width, height] = FRAMES[index % FRAMES.length];
+            return (
+              <figure key={`${src}-${index}`} className="lookbook-card" style={{
+                "--photo-width": `${width}svh`,
+                "--photo-height": `${height}svh`,
+                "--photo-inset": `${(index % 2) * 2}svh`,
+              } as CSSProperties}>
+                <div className="lookbook-photo relative overflow-hidden rounded-[4px] bg-phold">
+                  <Image src={src} alt="" fill sizes="(min-width: 1024px) 52vh, (min-width: 360px) 48vw, 100vw" className="object-cover" />
+                </div>
+                <figcaption className="mt-2.5 break-words text-[13px] leading-snug text-ink/80">{caption}</figcaption>
+              </figure>
+            );
+          })}
         </div>
-        <div className="absolute right-[clamp(16px,3.4vw,48px)] top-[calc(clamp(96px,14vh,140px)+110px)] z-10 flex w-[180px] flex-col gap-2.5">
+        <div className="lookbook-progress" aria-hidden>
           <span className="eyebrow text-ink">
-            <span ref={counterRef}>01</span> / {String(photos.length).padStart(2, "0")}
+            <span ref={counter}>01</span> / {String(photos.length).padStart(2, "0")}
           </span>
-          <i className="block h-px bg-ink/18">
-            <div ref={barRef} className="h-full origin-left bg-ink" style={{ transform: "scaleX(0)" }} />
-          </i>
+          <span className="mt-2.5 block h-px bg-ink/18">
+            <span ref={bar} className="block h-full origin-left scale-x-0 bg-ink" />
+          </span>
         </div>
       </div>
     </section>

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ArrowRight } from "@/components/icons";
 import { RemoveItem } from "@/components/remove-item";
 import { ReservationTimer } from "@/components/reservation-timer";
 import { getCartItems, getCartToken } from "@/lib/cart";
@@ -28,7 +29,7 @@ export default async function CartPage() {
             minutes while you decide.
           </p>
           <Link href="/shop" className="mt-6 inline-flex h-[46px] items-center gap-2.5 rounded-full bg-ink px-5 text-[15px] font-medium text-milk transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.97]">
-            Browse the bench <span aria-hidden>→</span>
+            Browse the bench <ArrowRight className="size-4" aria-hidden="true" />
           </Link>
         </div>
       ) : (
@@ -46,7 +47,7 @@ export default async function CartPage() {
                   </Link>
                   <p className="eyebrow mt-1 text-ink/60">One of a kind · {site.reservationMinutes} min hold</p>
                   <div className="mt-2">
-                    <ReservationTimer reservedUntil={i.reservedUntil} />
+                    <ReservationTimer reservedUntil={i.reservedUntil} productId={i.productId} />
                   </div>
                   <div className="mt-3">
                     <RemoveItem productId={i.productId} />
@@ -74,7 +75,7 @@ export default async function CartPage() {
               href="/checkout"
               className="mt-8 inline-flex h-[52px] w-full items-center justify-center gap-2.5 rounded-full bg-ink text-[15px] font-medium text-milk transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.97]"
             >
-              Continue to checkout <span aria-hidden>→</span>
+              Continue to checkout <ArrowRight className="size-4" aria-hidden="true" />
             </Link>
             <p className="eyebrow mt-4 text-ink/50">Reserved items are yours for {site.reservationMinutes} minutes</p>
           </aside>

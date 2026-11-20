@@ -8,8 +8,9 @@ type Stat = { value: number; suffix?: string; label: string; note: string };
  * Statistik counter — port JwCounters (MOTION-SPEC §2.2):
  * trigger viewport 25%, count-up 1600ms expo-out 1−2^(−10t),
  * format en-US, suffix oxide, garis atas scaleX 1.2s stagger 90ms.
+ * `dark` untuk penempatan di section gelap (teks milk, hairline milk).
  */
-export function StatsCounters({ stats }: { stats: Stat[] }) {
+export function StatsCounters({ stats, dark = false }: { stats: Stat[]; dark?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const [started, setStarted] = useState(false);
   const valuesRef = useRef<(HTMLSpanElement | null)[]>([]);
@@ -20,7 +21,8 @@ export function StatsCounters({ stats }: { stats: Stat[] }) {
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduced) {
-      setStarted(true);
+      // Langsung angka final tanpa count-up; via rAF agar tidak setState sinkron di effect
+      requestAnimationFrame(() => setStarted(true));
       valuesRef.current.forEach((s, i) => {
         if (s) s.textContent = stats[i].value.toLocaleString("en-US");
       });
@@ -73,15 +75,15 @@ export function StatsCounters({ stats }: { stats: Stat[] }) {
         <div key={s.label} className="relative py-[22px]">
           <span
             aria-hidden
-            className="absolute inset-x-0 top-0 h-px origin-left bg-ink/18 transition-transform duration-[1200ms]"
+            className={`absolute inset-x-0 top-0 h-px origin-left transition-transform duration-[1200ms] ${dark ? "bg-milk/20" : "bg-ink/18"}`}
             style={{ transform: `scaleX(${started ? 1 : 0})`, transitionDelay: `${i * 90}ms`, transitionTimingFunction: "cubic-bezier(.22,1,.36,1)" }}
           />
-          <p className="font-display text-[clamp(64px,7.4vw,120px)] font-bold leading-[0.86] tracking-[-0.01em] tabular-nums">
+          <p className={`font-display text-[clamp(64px,7.4vw,120px)] font-bold leading-[0.86] tracking-[-0.01em] tabular-nums ${dark ? "text-milk" : "text-ink"}`}>
             <span ref={(el) => { valuesRef.current[i] = el; }}>0</span>
             {s.suffix ? <small className="ml-1 align-baseline text-[0.42em] text-oxide">{s.suffix}</small> : null}
           </p>
-          <p className="eyebrow mt-4 mb-2 text-ink">{s.label}</p>
-          <p className="body-muted max-w-[30ch] text-[14.5px] leading-normal">{s.note}</p>
+          <p className={`eyebrow mt-4 mb-2 ${dark ? "text-milk" : "text-ink"}`}>{s.label}</p>
+          <p className={`max-w-[30ch] text-[14.5px] leading-normal ${dark ? "text-milk/70" : "body-muted"}`}>{s.note}</p>
         </div>
       ))}
     </div>

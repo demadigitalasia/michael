@@ -21,7 +21,9 @@ export default async function CheckoutPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 pb-24 pt-32 sm:px-6 lg:px-12">
-      <p className="eyebrow text-ink/60">Checkout · {items.length} pieces</p>
+      <p className="eyebrow text-ink/60">
+        Checkout · {items.length} {items.length === 1 ? "piece" : "pieces"}
+      </p>
       <h1 className="display mt-3 text-[clamp(44px,7vw,96px)] text-ink">Three steps, then it’s yours</h1>
       <div className="mt-12">
         <CheckoutFlow items={items} rates={rates} />

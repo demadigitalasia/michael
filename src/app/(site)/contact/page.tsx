@@ -1,4 +1,5 @@
 import { Reveal } from "@/components/reveal";
+import { ContactForm } from "@/components/contact-form";
 import { site } from "@/lib/site";
 
 export const metadata = {
@@ -46,17 +47,7 @@ export default function ContactPage() {
           </p>
         </Reveal>
         <Reveal className="mt-8" delay={90}>
-          <form action={`mailto:${site.email}`} className="grid gap-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <input required placeholder="Your name" className="h-[46px] rounded-[4px] border border-ink/20 bg-transparent px-4 text-[15px] text-ink focus:outline-none focus:ring-1 focus:ring-gold" />
-              <input required type="email" placeholder="Email" className="h-[46px] rounded-[4px] border border-ink/20 bg-transparent px-4 text-[15px] text-ink focus:outline-none focus:ring-1 focus:ring-gold" />
-            </div>
-            <textarea required rows={5} placeholder="What can we help with?" className="rounded-[4px] border border-ink/20 bg-transparent p-4 text-[15px] leading-relaxed text-ink focus:outline-none focus:ring-1 focus:ring-gold" />
-            <button type="submit" className="inline-flex h-[46px] w-fit items-center gap-2.5 rounded-full bg-ink px-5 text-[15px] font-medium text-milk transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.97]">
-              Send message <span aria-hidden>→</span>
-            </button>
-            <p className="eyebrow text-ink/50">We never share your details.</p>
-          </form>
+          <ContactForm />
         </Reveal>
       </section>
     </div>

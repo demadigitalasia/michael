@@ -6,11 +6,18 @@ import { useScroll, useReducedMotion } from "framer-motion";
 
 export type ProcessStep = { title: string; body: string; spec: string };
 
+/** Kondisi pin — sama persis dengan variant CSS `editorial-motion` (globals.css). */
+const PIN_MQ = "(min-width: 64rem) and (min-height: 720px) and (prefers-reduced-motion: no-preference)";
+
 /**
  * The Workshop sequence — port JewelwrightMaking (versi scroll, MOTION-SPEC §2.5):
  * Section gelap, langkah 01–05 menyala mengikuti scroll, DUA counter hidup:
  * "Hours at the wheels" (mm:ss, menghitung naik) & "Wheel grit" (80 → 50,000).
  * Baris data mono per langkah. Foto opsional mengisi kolom kiri.
+ *
+ * Pin HANYA saat kondisi PIN_MQ (desktop, layar cukup tinggi, motion ok) —
+ * di ponsel/reduced-motion konten mengalir normal sehingga semua langkah terbaca,
+ * dan counter langsung menampilkan nilai akhir (MOTION-SPEC §5).
  */
 export function ProcessSteps({
   steps,
@@ -27,8 +34,9 @@ export function ProcessSteps({
 }) {
   const sectionRef = useRef<HTMLElement>(null);
   const [step, setStep] = useState(0);
-  const [hours, setHours] = useState("00:00");
-  const [grit, setGrit] = useState(80);
+  const [hours, setHours] = useState(() => formatHours(totalHours));
+  const [grit, setGrit] = useState(50000);
+  const [pinned, setPinned] = useState(false);
   const reduce = useReducedMotion();
   const n = steps.length;
 
@@ -37,26 +45,57 @@ export function ProcessSteps({
     offset: ["start start", "end end"],
   });
 
+  // Sinkron dengan media query CSS — satu sumber kebenaran untuk pin
   useEffect(() => {
-    if (reduce) return;
-    const unsub = scrollYProgress.on("change", (t) => {
+    const mq = matchMedia(PIN_MQ);
+    const sync = () => setPinned(mq.matches);
+    const raf = requestAnimationFrame(sync); // rAF: hindari setState sinkron di effect (lint)
+    const onChange = () => sync();
+    mq.addEventListener("change", onChange);
+    return () => {
+      cancelAnimationFrame(raf);
+      mq.removeEventListener("change", onChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!pinned || reduce) {
+      // Tanpa pin: nilai akhir langsung, tanpa animasi (MOTION-SPEC §5)
+      const raf = requestAnimationFrame(() => {
+        setStep(n - 1);
+        setHours(formatHours(totalHours));
+        setGrit(50000);
+      });
+      return () => cancelAnimationFrame(raf);
+    }
+    const update = (t: number) => {
       setStep(Math.min(n - 1, Math.floor(t * n * 0.999)));
       // mm:ss dari totalHours × progres (tabular-nums)
-      const totalSec = Math.round(totalHours * 3600 * t);
-      const hh = String(Math.floor(totalSec / 3600)).padStart(2, "0");
-      const mm = String(Math.floor((totalSec % 3600) / 60)).padStart(2, "0");
-      setHours(`${hh}:${mm}`);
+      setHours(formatHours(totalHours * t));
       // grit 80 → 50,000 (ease-out agar terasa alami)
       const eased = 1 - Math.pow(2, -10 * Math.min(1, t * 1.2));
       setGrit(Math.round(80 + (50000 - 80) * eased));
-    });
-    return () => unsub();
-  }, [scrollYProgress, n, totalHours, reduce]);
+    };
+    const raf = requestAnimationFrame(() => update(scrollYProgress.get()));
+    const unsub = scrollYProgress.on("change", update);
+    return () => {
+      cancelAnimationFrame(raf);
+      unsub();
+    };
+  }, [pinned, reduce, n, totalHours, scrollYProgress]);
 
   return (
-    <section ref={sectionRef} aria-label={title} className="relative bg-bench text-milk" style={{ height: `${n * 90}vh` }}>
-      <div className="sticky top-0 flex h-screen min-h-[640px] flex-col overflow-hidden">
-        <div className="mx-auto grid w-full max-w-7xl flex-1 grid-cols-1 gap-10 px-[clamp(16px,3.4vw,48px)] pt-[clamp(80px,10vh,104px)] lg:grid-cols-[1fr_1.1fr]">
+    <section
+      ref={sectionRef}
+      aria-label={title}
+      className="relative bg-bench text-milk"
+      style={pinned ? { height: `${n * 90}vh` } : undefined}
+    >
+      <div className={pinned ? "sticky top-0 flex h-screen min-h-[640px] flex-col overflow-hidden" : "flex flex-col"}>
+        <div
+          className="mx-auto grid w-full max-w-7xl flex-1 grid-cols-1 gap-10 px-[clamp(16px,3.4vw,48px)] py-16 lg:grid-cols-[1fr_1.1fr]"
+          style={pinned ? { paddingTop: "clamp(80px,10vh,104px)", paddingBottom: 0 } : undefined}
+        >
           {/* Kiri: kicker + counter hidup */}
           <div>
             <p className="eyebrow text-milk/60">{kicker}</p>
@@ -88,9 +127,9 @@ export function ProcessSteps({
           </div>
 
           {/* Kanan: langkah */}
-          <ol className="flex flex-col justify-center">
+          <ol className="flex flex-col justify-center py-4">
             {steps.map((s, i) => {
-              const on = i <= step;
+              const on = !pinned || i <= step;
               return (
                 <li
                   key={s.title}
@@ -100,8 +139,12 @@ export function ProcessSteps({
                   <span className="eyebrow row-span-2 pt-1 text-milk/50">{String(i + 1).padStart(2, "0")}</span>
                   <h3 className="text-[19px] font-semibold leading-tight text-milk">{s.title}</h3>
                   <p
-                    className="col-start-2 m-0 overflow-hidden text-[14.5px] leading-normal body-muted-dark transition-[max-height,margin] duration-700 ease-[cubic-bezier(.22,1,.36,1)]"
-                    style={{ maxHeight: on ? 120 : 0, marginTop: on ? 4 : 0 }}
+                    className="col-start-2 m-0 text-[14.5px] leading-normal body-muted-dark"
+                    style={
+                      pinned
+                        ? { overflow: "hidden", maxHeight: on ? 120 : 0, marginTop: on ? 4 : 0, transition: "max-height .7s cubic-bezier(.22,1,.36,1), margin .7s cubic-bezier(.22,1,.36,1)" }
+                        : undefined
+                    }
                   >
                     {s.body}
                   </p>
@@ -114,4 +157,11 @@ export function ProcessSteps({
       </div>
     </section>
   );
+}
+
+function formatHours(hours: number): string {
+  const totalSec = Math.round(hours * 3600);
+  const hh = String(Math.floor(totalSec / 3600)).padStart(2, "0");
+  const mm = String(Math.floor((totalSec % 3600) / 60)).padStart(2, "0");
+  return `${hh}:${mm}`;
 }

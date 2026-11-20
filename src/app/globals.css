@@ -104,3 +104,124 @@ body {
     scroll-behavior: auto;
   }
 }
+
+@custom-variant editorial-motion {
+  @media (min-width: 64rem) and (min-height: 720px) and (prefers-reduced-motion: no-preference) {
+    @slot;
+  }
+}
+
+.lookbook {
+  scroll-margin-top: 4.5rem;
+}
+
+.lookbook-frame {
+  --lookbook-gutter: clamp(16px, 3.4vw, 48px);
+  padding: 3rem var(--lookbook-gutter);
+}
+
+.lookbook-track {
+  display: grid;
+  gap: 1.5rem 1rem;
+  margin-top: 1.5rem;
+}
+
+.lookbook-photo {
+  aspect-ratio: 4 / 5;
+}
+
+.lookbook-progress,
+.lookbook-ghost {
+  display: none;
+}
+
+@media (min-width: 360px) {
+  .lookbook-track {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .lookbook-track {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) and (min-height: 720px) and (prefers-reduced-motion: no-preference) {
+  .lookbook {
+    height: 280svh;
+  }
+
+  .lookbook-frame {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    overflow: clip;
+    padding: 0;
+  }
+
+  .lookbook-heading {
+    position: absolute;
+    inset: clamp(88px, 12svh, 126px) var(--lookbook-gutter) auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 2rem;
+    z-index: 1;
+  }
+
+  .lookbook-track {
+    position: absolute;
+    inset: 0 auto 0 0;
+    display: flex;
+    width: max-content;
+    align-items: end;
+    margin: 0;
+    gap: clamp(24px, 3vw, 48px);
+    padding: 0 var(--lookbook-gutter) 12svh clamp(48px, 17vw, 250px);
+    transform: translateX(var(--lookbook-offset, 0px));
+  }
+
+  .lookbook-card {
+    width: var(--photo-width);
+    margin-bottom: var(--photo-inset);
+    display: grid;
+    grid-template-rows: auto minmax(2.5em, auto);
+  }
+
+  .lookbook-photo {
+    height: var(--photo-height);
+    aspect-ratio: auto;
+  }
+
+  .lookbook-progress {
+    position: absolute;
+    display: block;
+    top: calc(clamp(88px, 12svh, 126px) + 92px);
+    right: var(--lookbook-gutter);
+    width: 140px;
+  }
+
+  .lookbook-ghost {
+    display: block;
+    position: absolute;
+    white-space: nowrap;
+    pointer-events: none;
+    bottom: 4svh;
+    left: var(--lookbook-gutter);
+    font-size: clamp(120px, 18vw, 270px);
+    opacity: 0.055;
+    transform: translateX(var(--lookbook-ghost-offset, 0px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+body:has(.mobile-nav-dialog[open]) {
+  overflow: hidden;
+}

@@ -1,6 +1,7 @@
 import { CustomFlow } from "@/components/custom-flow";
 import { CustomOrderForm } from "@/components/custom-order-form";
 import { Reveal } from "@/components/reveal";
+import { ArrowRight } from "@/components/icons";
 import { prisma } from "@/lib/prisma";
 
 export const revalidate = 60;
@@ -39,11 +40,15 @@ export default async function CustomPage() {
             Pendants, matched pairs, carvings and intarsia. We talk it through, you pick the stone, we cut it at
             the bench — and you get progress photos along the way.
           </p>
+          <a href="#start" className="mt-6 inline-flex h-[46px] items-center gap-2.5 rounded-full bg-ink px-5 text-[15px] font-medium text-milk hover:bg-bench">
+            Start a custom piece <ArrowRight className="size-4" aria-hidden="true" />
+          </a>
         </Reveal>
       </div>
 
       {/* 4 langkah (scroll-driven, stage sketsa) */}
       <CustomFlow
+        ctaHref="#start"
         kicker="Custom orders"
         title="From rough to yours"
         steps={[
@@ -106,11 +111,11 @@ export default async function CustomPage() {
       </section>
 
       {/* Form */}
-      <section id="start" className="border-t border-ink/10 bg-sketch scroll-mt-20">
+      <section id="start" aria-labelledby="custom-form-heading" tabIndex={-1} className="border-t border-ink/10 bg-sketch scroll-mt-20">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-12">
           <Reveal>
             <p className="eyebrow text-ink/60">Start a custom piece</p>
-            <h2 className="display mt-3 text-[clamp(44px,5.4vw,84px)] text-ink">Tell us what you have in mind</h2>
+            <h2 id="custom-form-heading" className="display mt-3 text-[clamp(44px,5.4vw,84px)] text-ink">Tell us what you have in mind</h2>
             <p className="body-muted mt-4 max-w-[52ch] text-[17px] leading-relaxed">
               A few lines is plenty. We reply within two working days with questions, a rough price and a next
               step.

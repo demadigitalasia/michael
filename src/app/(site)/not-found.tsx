@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowRight } from "@/components/icons";
 
 export const metadata = { title: "Page not found" };
 
@@ -18,7 +19,7 @@ export default function NotFound() {
           href="/shop"
           className="inline-flex h-[46px] items-center gap-2.5 rounded-full bg-ink px-5 text-[15px] font-medium text-milk transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.97]"
         >
-          Shop new arrivals <span aria-hidden>→</span>
+          Shop new arrivals <ArrowRight className="size-4" aria-hidden="true" />
         </Link>
         <Link
           href="/custom"

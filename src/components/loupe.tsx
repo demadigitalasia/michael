@@ -8,7 +8,7 @@ import Image from "next/image";
  * lensa 160px mengikuti kursor, zoom 2.2×, hanya pointer halus (desktop).
  * Sempurna untuk melihat inclusion & banding batu.
  */
-export function Loupe({ src, alt, sizes }: { src: string; alt: string; sizes: string }) {
+export function Loupe({ src, alt, sizes, eager = false }: { src: string; alt: string; sizes: string; eager?: boolean }) {
   const frameRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(false);
   const [pos, setPos] = useState({ x: 50, y: 50 });
@@ -30,7 +30,7 @@ export function Loupe({ src, alt, sizes }: { src: string; alt: string; sizes: st
         });
       }}
     >
-      <Image src={src} alt={alt} fill sizes={sizes} priority className="object-cover" />
+      <Image src={src} alt={alt} fill sizes={sizes} loading={eager ? "eager" : undefined} className="object-cover" />
       {active && (
         <div
           aria-hidden

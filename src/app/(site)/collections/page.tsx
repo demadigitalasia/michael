@@ -1,8 +1,10 @@
 import { ProductCard } from "@/components/product-card";
+import { ArrowRight } from "@/components/icons";
 import { Reveal } from "@/components/reveal";
 import { Lookbook } from "@/components/lookbook";
 import { StatsCounters } from "@/components/stats-counters";
 import { listProducts } from "@/lib/products";
+import { lookbookPhoto } from "@/lib/product-listing";
 import { categories } from "@/lib/site";
 import Link from "next/link";
 
@@ -18,10 +20,7 @@ export default async function CollectionsPage() {
     categories.map(async (c) => ({ cat: c, products: await listProducts({ category: c.key, limit: 8 }) })),
   );
 
-  const lookbookPhotos = (await listProducts({ limit: 8 })).map((p) => ({
-    src: p.images[0]?.url ?? "",
-    caption: p.stoneType,
-  }));
+  const lookbookPhotos = (await listProducts({ limit: 8 })).flatMap(lookbookPhoto);
 
   return (
     <div className="pt-24">
@@ -31,9 +30,11 @@ export default async function CollectionsPage() {
           <p className="eyebrow text-ink/60">Collections</p>
           <h1 className="display mt-3 text-[clamp(44px,7vw,96px)] text-ink">Four categories</h1>
           <p className="body-muted mt-4 max-w-[56ch] text-[17px] leading-relaxed">
-            Each category is a family of stones cut with the same hands and the same wheels. Start with a type —
-            every piece inside is one of a kind.
+            Browse available physical stones by cut or form. Concept images are kept in our separate material studies.
           </p>
+          <Link href="/material-studies" className="mt-5 inline-flex items-center gap-2 text-[14px] font-medium text-ink underline decoration-gold decoration-2 underline-offset-4 hover:text-gold">
+            View material studies <ArrowRight className="size-4" aria-hidden="true" />
+          </Link>
         </Reveal>
       </div>
 
@@ -42,10 +43,10 @@ export default async function CollectionsPage() {
           <Reveal>
             <div className="flex flex-wrap items-baseline justify-between gap-3">
               <h2 className="display text-[clamp(32px,4vw,56px)] text-ink">{cat.label}</h2>
-              <p className="eyebrow text-ink/60">{products.length} available</p>
+              <p className="eyebrow text-ink/60">{products.length} listings</p>
             </div>
           </Reveal>
-          <div className="mt-8 grid grid-cols-1 gap-x-4 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-8 grid grid-cols-1 gap-x-4 gap-y-10 min-[400px]:grid-cols-2 lg:grid-cols-4">
             {products.map((p, i) => (
               <Reveal key={p.id} delay={(i % 4) * 90}>
                 <ProductCard product={p} eager={i < 4} />
@@ -63,7 +64,7 @@ export default async function CollectionsPage() {
         photos={lookbookPhotos}
         kicker="From the bench"
         title="Where they come from"
-        note="Photographed on the bench where they were cut, beside the rough they came from, and in the hand at life size."
+        note="A closer look at the color and texture of the materials."
       />
 
       {/* Stats reuse */}
@@ -97,7 +98,7 @@ export default async function CollectionsPage() {
               </p>
             </div>
             <Link href="/custom" className="inline-flex h-[46px] items-center gap-2.5 justify-self-start rounded-full bg-ink px-5 text-[15px] font-medium text-milk transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.97] md:justify-self-end">
-              Start a custom piece <span aria-hidden>→</span>
+              Start a custom piece <ArrowRight className="size-4" aria-hidden="true" />
             </Link>
           </div>
         </Reveal>

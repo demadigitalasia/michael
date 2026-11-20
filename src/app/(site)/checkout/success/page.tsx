@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowLeft } from "@/components/icons";
 import { prisma } from "@/lib/prisma";
 import { formatUsd } from "@/lib/site";
 
@@ -20,7 +21,7 @@ export default async function CheckoutSuccessPage({
       <h1 className="display mt-3 text-[clamp(44px,7vw,96px)] text-ink">It’s yours.</h1>
       <p className="body-muted mt-4 max-w-[52ch] text-[17px] leading-relaxed">
         {order
-          ? `Payment received — $${formatUsd(order.totalCents)} — and your stones are being packed. A confirmation email is on its way to ${order.email}, with tracking to follow once it ships.`
+          ? `Payment received — ${formatUsd(order.totalCents)} — and your stones are being packed. A confirmation email is on its way to ${order.email}, with tracking to follow once it ships.`
           : "Payment received. A confirmation email is on its way with your order details and tracking to follow."}
       </p>
 
@@ -43,7 +44,7 @@ export default async function CheckoutSuccessPage({
 
       <div className="mt-10 flex flex-wrap gap-3">
         <Link href="/shop" className="inline-flex h-[46px] items-center gap-2.5 rounded-full bg-ink px-5 text-[15px] font-medium text-milk transition-transform duration-200 hover:-translate-y-0.5">
-          Back to the bench <span aria-hidden>→</span>
+          Back to the bench <ArrowLeft className="size-4" aria-hidden="true" />
         </Link>
         <Link href="/care" className="inline-flex h-[46px] items-center gap-2.5 rounded-full border border-ink/20 px-5 text-[15px] font-medium text-ink transition-colors hover:border-ink/50">
           Care guides
