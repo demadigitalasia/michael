@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createReadStream, existsSync, statSync } from "node:fs";
-import { join, normalize, extname } from "node:path";
+import { join, normalize, extname, sep } from "node:path";
 import { Readable } from "node:stream";
 import type { ReadableStream as WebReadableStream } from "node:stream/web";
 
@@ -18,8 +18,11 @@ const MIME: Record<string, string> = {
 export async function GET(_req: Request, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params;
   const dir = process.env.UPLOAD_DIR ?? "./uploads";
-  const safe = normalize(join(dir, ...path.map(decodeURIComponent)));
-  if (!safe.startsWith(normalize(dir)) || !existsSync(safe) || !statSync(safe).isFile()) {
+  // Next sudah decode segmen path — cukup join+normalize. Prefix check pakai
+  // pemisah direktori agar direktori sibling (uploads2) tidak lolos.
+  const root = normalize(dir);
+  const safe = normalize(join(root, ...path));
+  if (!safe.startsWith(root + sep) || !existsSync(safe) || !statSync(safe).isFile()) {
     return new NextResponse("Not found", { status: 404 });
   }
   const type = MIME[extname(safe).toLowerCase()] ?? "application/octet-stream";

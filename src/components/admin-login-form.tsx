@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowRight } from "@/components/icons";
 
 export function AdminLoginForm() {
   const router = useRouter();
@@ -43,7 +44,7 @@ export function AdminLoginForm() {
         disabled={loading}
         className="inline-flex h-[46px] items-center justify-center gap-2.5 rounded-full bg-milk px-5 text-[15px] font-medium text-ink transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.97] disabled:opacity-60"
       >
-        {loading ? "Checking…" : "Sign in →"}
+        {loading ? "Checking…" : <>Sign in <ArrowRight className="size-4" aria-hidden="true" /></>}
       </button>
       {error && <p className="text-[13px] text-oxide">{error}</p>}
     </form>

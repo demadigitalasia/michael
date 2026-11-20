@@ -10,16 +10,22 @@ export function InquiryControls({ id, status, adminNotes }: { id: string; status
   const router = useRouter();
   const [form, setForm] = useState({ status, adminNotes });
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function save() {
     setSaving(true);
+    setError(null);
     try {
-      await fetch("/api/admin/custom-orders", {
+      const res = await fetch("/api/admin/custom-orders", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, ...form }),
       });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? "Save failed");
       router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Save failed");
     } finally {
       setSaving(false);
     }
@@ -33,10 +39,10 @@ export function InquiryControls({ id, status, adminNotes }: { id: string; status
         ))}
       </select>
       <input placeholder="Internal notes…" value={form.adminNotes} onChange={(e) => setForm({ ...form, adminNotes: e.target.value })} className="h-[38px] flex-1 rounded-[4px] border border-ink/20 bg-transparent px-3 text-[13px] text-ink focus:outline-none focus:ring-1 focus:ring-gold" />
-      <a href={`mailto:reply?subject=Your custom inquiry`} className="hidden" aria-hidden />
       <button onClick={save} disabled={saving} className="inline-flex h-[38px] items-center rounded-full bg-ink px-4 text-[13px] font-medium text-milk transition-transform hover:-translate-y-0.5 disabled:opacity-60">
         {saving ? "Saving…" : "Save"}
       </button>
+      {error && <span className="text-[12px] text-oxide">{error}</span>}
     </div>
   );
 }

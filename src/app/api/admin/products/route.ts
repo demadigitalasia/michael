@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { cleanupMediaFiles } from "@/lib/media-cleanup";
 import { z } from "zod";
 
 const base = z.object({
@@ -20,10 +21,19 @@ const base = z.object({
   weightGram: z.number().nullable().optional(),
   priceCents: z.number().int().min(0),
   status: z.enum(["DRAFT", "AVAILABLE", "RESERVED", "SOLD", "HIDDEN"]),
+  isConcept: z.boolean().default(false),
   featured: z.boolean().default(false),
   metaTitle: z.string().max(70).default(""),
   metaDescription: z.string().max(160).default(""),
   images: z.array(z.object({ url: z.string(), alt: z.string().default("") })).min(1),
+}).superRefine((product, ctx) => {
+  if (!product.isConcept && product.status === "AVAILABLE" && product.weightGram == null && product.weightCarat == null) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["weightGram"],
+      message: "Add a shipping weight before publishing a physical stone.",
+    });
+  }
 });
 
 const num = (v: FormDataEntryValue | null): number | null => {
@@ -51,6 +61,7 @@ function parseForm(fd: FormData) {
     weightGram: num(fd.get("weightGram")),
     priceCents: Math.round(Number(fd.get("priceUsd") ?? 0) * 100),
     status: fd.get("status") ?? "DRAFT",
+    isConcept: fd.get("isConcept") === "on",
     featured: fd.get("featured") === "on",
     metaTitle: String(fd.get("metaTitle") ?? "").trim(),
     metaDescription: String(fd.get("metaDescription") ?? "").trim(),
@@ -98,6 +109,7 @@ export async function PUT(req: Request) {
     const id = String(fd.get("id") ?? "");
     const data = parseForm(fd);
     const { images, ...product } = data;
+    const before = await prisma.product.findUnique({ where: { id }, select: { images: { select: { url: true } } } });
     const row = await prisma.product.update({
       where: { id },
       data: {
@@ -109,9 +121,14 @@ export async function PUT(req: Request) {
         },
       },
     });
+    // Bersihkan file foto yang dilepas dari form (bila tak dipakai tempat lain)
+    const newUrls = new Set(images.map((i) => i.url));
+    const removed = (before?.images ?? []).map((i) => i.url).filter((u) => !newUrls.has(u));
+    await cleanupMediaFiles(removed);
     return NextResponse.json({ ok: true, id: row.id });
   } catch (e) {
     if (e instanceof z.ZodError) return NextResponse.json({ error: e.issues[0]?.message ?? "Invalid input" }, { status: 400 });
+    if (String(e).includes("Unique")) return NextResponse.json({ error: "Slug already exists" }, { status: 409 });
     console.error(e);
     return NextResponse.json({ error: "Update failed" }, { status: 500 });
   }
@@ -122,9 +139,12 @@ export async function DELETE(req: Request) {
   if (denied) return denied;
   try {
     const { id } = (await req.json()) as { id: string };
+    const urls = await prisma.productImage.findMany({ where: { productId: id }, select: { url: true } });
     await prisma.product.delete({ where: { id } });
+    await cleanupMediaFiles(urls.map((u) => u.url));
     return NextResponse.json({ ok: true });
   } catch {
+    // Produk dengan riwayat order menolak dihapus (FK) → snapshot order tetap utuh
     return NextResponse.json({ error: "Delete failed (order history keeps a snapshot)" }, { status: 500 });
   }
 }

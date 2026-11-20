@@ -10,8 +10,8 @@ export default async function AdminSettingsPage() {
     <div>
       <h1 className="display text-[clamp(32px,4vw,48px)] text-ink">Settings</h1>
       <p className="body-muted mt-2 max-w-[60ch] text-[14.5px]">
-        SEO global, thumbnail berbagi tautan (OG image), dan verifikasi Search
-        Console — berlaku di seluruh situs.
+        Global SEO, the link-share thumbnail (OG image) and Search Console
+        verification — applied across the whole site.
       </p>
       <div className="mt-8">
         <SettingsForm

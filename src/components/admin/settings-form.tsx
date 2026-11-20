@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { ArrowRight } from "@/components/icons";
 
 export type SettingsData = {
   metaTitle: string;
@@ -95,12 +96,12 @@ export function SettingsForm({ settings }: { settings: SettingsData }) {
           <input
             value={form.googleSiteVerification}
             onChange={(e) => setForm({ ...form, googleSiteVerification: e.target.value })}
-            placeholder="Isi dari meta tag google-site-verification"
+            placeholder="From the google-site-verification meta tag"
             className={field}
           />
         </label>
         <label className="grid gap-1.5">
-          <span className={label}>Instagram URL (opsional, untuk structured data)</span>
+          <span className={label}>Instagram URL (optional, for structured data)</span>
           <input
             value={form.instagramUrl}
             onChange={(e) => setForm({ ...form, instagramUrl: e.target.value })}
@@ -112,7 +113,7 @@ export function SettingsForm({ settings }: { settings: SettingsData }) {
 
       {/* OG image */}
       <div>
-        <p className={label}>OG image — thumbnail saat link dibagikan (WA/IG/FB)</p>
+        <p className={label}>OG image — thumbnail when a link is shared (WhatsApp/IG/FB)</p>
         <div
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
@@ -122,7 +123,7 @@ export function SettingsForm({ settings }: { settings: SettingsData }) {
           onClick={() => fileRef.current?.click()}
           className="mt-2 grid cursor-pointer place-items-center rounded-[4px] border border-dashed border-ink/30 bg-sketch p-6 text-center"
         >
-          <span className="eyebrow text-ink/60">{uploading ? "Uploading…" : "Drop image or click — 1200×630 disarankan"}</span>
+          <span className="eyebrow text-ink/60">{uploading ? "Uploading…" : "Drop image or click — 1200×630 recommended"}</span>
           <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => void uploadOg(e.target.files?.[0])} />
         </div>
         {form.ogImageUrl && (
@@ -141,9 +142,9 @@ export function SettingsForm({ settings }: { settings: SettingsData }) {
           disabled={saving}
           className="mt-6 inline-flex h-[46px] w-full items-center justify-center gap-2.5 rounded-full bg-ink px-5 text-[15px] font-medium text-milk transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.97] disabled:opacity-60"
         >
-          {saving ? "Saving…" : "Save settings →"}
+          {saving ? "Saving…" : <>Save settings <ArrowRight className="size-4" aria-hidden="true" /></>}
         </button>
-        {saved && <p className="eyebrow mt-3 text-gold">Saved — berlaku di seluruh situs.</p>}
+        {saved && <p className="eyebrow mt-3 text-gold">Saved — applies across the site.</p>}
         {error && <p className="mt-3 text-[13px] text-oxide">{error}</p>}
       </div>
     </div>

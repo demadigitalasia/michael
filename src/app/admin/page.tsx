@@ -1,10 +1,15 @@
 import Link from "next/link";
+import { ArrowRight } from "@/components/icons";
 import { prisma } from "@/lib/prisma";
 import { effectiveStatus } from "@/lib/products";
 import { formatUsd } from "@/lib/site";
 
 export default async function AdminOverviewPage() {
-  const [newOrders, newInquiries, soldCount, revenueAgg, products] = await Promise.all([
+  const [toShip, newInquiryCount, newOrders, newInquiries, soldCount, revenueAgg, products] = await Promise.all([
+    // Kartu KPI: hitung semua (bukan take:5 — angka kartu harus akurat)
+    prisma.order.count({ where: { status: { in: ["PAID", "PROCESSING"] } } }),
+    prisma.customOrder.count({ where: { status: "NEW" } }),
+    // List ringkasan (5 terbaru)
     prisma.order.findMany({ where: { status: { in: ["PAID", "PROCESSING"] } }, orderBy: { placedAt: "desc" }, take: 5, include: { items: true } }),
     prisma.customOrder.findMany({ where: { status: "NEW" }, orderBy: { createdAt: "desc" }, take: 5 }),
     prisma.product.count({ where: { status: "SOLD" } }),
@@ -13,8 +18,8 @@ export default async function AdminOverviewPage() {
   ]);
 
   const cards = [
-    { label: "Orders to ship", value: String(newOrders.length), href: "/admin/orders" },
-    { label: "New inquiries", value: String(newInquiries.length), href: "/admin/custom-orders" },
+    { label: "Orders to ship", value: String(toShip), href: "/admin/orders" },
+    { label: "New inquiries", value: String(newInquiryCount), href: "/admin/custom-orders" },
     { label: "Stones sold", value: String(soldCount), href: "/admin/products" },
     { label: "Revenue", value: formatUsd(revenueAgg._sum.totalCents ?? 0), href: "/admin/orders" },
   ];
@@ -35,7 +40,7 @@ export default async function AdminOverviewPage() {
         <section>
           <div className="flex items-baseline justify-between">
             <h2 className="text-[17px] font-semibold text-ink">Recent orders</h2>
-            <Link href="/admin/orders" className="eyebrow text-ink/60 underline underline-offset-4">All →</Link>
+            <Link href="/admin/orders" className="eyebrow inline-flex items-center gap-1 text-ink/60 underline underline-offset-4">All <ArrowRight className="size-3.5" aria-hidden="true" /></Link>
           </div>
           <ul className="mt-4">
             {newOrders.map((o) => (
@@ -53,7 +58,7 @@ export default async function AdminOverviewPage() {
         <section>
           <div className="flex items-baseline justify-between">
             <h2 className="text-[17px] font-semibold text-ink">Latest products</h2>
-            <Link href="/admin/products" className="eyebrow text-ink/60 underline underline-offset-4">Manage →</Link>
+            <Link href="/admin/products" className="eyebrow inline-flex items-center gap-1 text-ink/60 underline underline-offset-4">Manage <ArrowRight className="size-3.5" aria-hidden="true" /></Link>
           </div>
           <ul className="mt-4">
             {products.map((p) => (
@@ -70,7 +75,7 @@ export default async function AdminOverviewPage() {
         <section className="mt-10">
           <div className="flex items-baseline justify-between">
             <h2 className="text-[17px] font-semibold text-ink">New custom inquiries</h2>
-            <Link href="/admin/custom-orders" className="eyebrow text-ink/60 underline underline-offset-4">Inbox →</Link>
+            <Link href="/admin/custom-orders" className="eyebrow inline-flex items-center gap-1 text-ink/60 underline underline-offset-4">Inbox <ArrowRight className="size-3.5" aria-hidden="true" /></Link>
           </div>
           <ul className="mt-4">
             {newInquiries.map((i) => (

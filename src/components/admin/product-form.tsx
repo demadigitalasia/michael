@@ -3,13 +3,14 @@
 import { useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { ArrowRight } from "@/components/icons";
 
 export type AdminProduct = {
   id: string; slug: string; title: string; description: string; category: string;
   stoneType: string; color: string; form: string; treatment: string; origin: string;
   lengthMm: number | null; widthMm: number | null; depthMm: number | null;
   weightCarat: number | null; weightGram: number | null;
-  priceCents: number; status: string; featured: boolean;
+  priceCents: number; status: string; isConcept: boolean; featured: boolean;
   metaTitle: string; metaDescription: string;
   images: { url: string; alt: string }[];
 };
@@ -25,6 +26,7 @@ export function ProductForm({ product }: { product?: AdminProduct }) {
   const [images, setImages] = useState<Img[]>(product?.images ?? []);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -46,10 +48,35 @@ export function ProductForm({ product }: { product?: AdminProduct }) {
     }
   }
 
+  async function onDelete() {
+    if (!product) return;
+    if (!window.confirm(`Delete "${product.title}"? This cannot be undone.`)) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/products", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: product.id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? "Delete failed");
+      router.push("/admin/products");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Delete failed");
+      setDeleting(false);
+    }
+  }
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (images.length === 0) {
       setError("Add at least one photo");
+      return;
+    }
+    if (!images[0].alt.trim()) {
+      setError("Add alt text for the primary photo — it powers accessibility & SEO");
       return;
     }
     setSaving(true);
@@ -124,11 +151,19 @@ export function ProductForm({ product }: { product?: AdminProduct }) {
           <label className="grid gap-1.5"><span className={label}>Width mm</span><input name="widthMm" type="number" step="0.1" defaultValue={product?.widthMm ?? ""} className={field} /></label>
           <label className="grid gap-1.5"><span className={label}>Depth mm</span><input name="depthMm" type="number" step="0.1" defaultValue={product?.depthMm ?? ""} className={field} /></label>
         </div>
+        <label className="flex items-start gap-2">
+          <input type="checkbox" name="isConcept" defaultChecked={product?.isConcept ?? false} className="mt-0.5 size-4 accent-[#121214]" />
+          <span>
+            <span className="block text-[14px] font-medium text-ink">AI material study — not for sale</span>
+            <span className="body-muted mt-1 block text-[13px]">Use for concept images that do not show an exact physical specimen.</span>
+          </span>
+        </label>
         <div className="grid gap-4 sm:grid-cols-3">
-          <label className="grid gap-1.5"><span className={label}>Weight carat</span><input name="weightCarat" type="number" step="0.01" defaultValue={product?.weightCarat ?? ""} className={field} /></label>
-          <label className="grid gap-1.5"><span className={label}>Weight gram</span><input name="weightGram" type="number" step="0.1" defaultValue={product?.weightGram ?? ""} className={field} /></label>
+          <label className="grid gap-1.5"><span className={label}>Weight carat</span><input name="weightCarat" type="number" min="0" step="0.01" defaultValue={product?.weightCarat ?? ""} className={field} /></label>
+          <label className="grid gap-1.5"><span className={label}>Weight gram</span><input name="weightGram" type="number" min="0" step="0.1" defaultValue={product?.weightGram ?? ""} className={field} /></label>
           <label className="grid gap-1.5"><span className={label}>Price USD</span><input name="priceUsd" type="number" step="0.01" required defaultValue={product ? product.priceCents / 100 : ""} className={field} /></label>
         </div>
+        <p className="body-muted -mt-2 text-[13px]">A physical stone needs a weight in carats or grams before it can be published for sale.</p>
         <div className="grid gap-4 sm:grid-cols-3">
           <label className="grid gap-1.5"><span className={label}>Origin</span><input name="origin" placeholder="Chihuahua, Mexico" defaultValue={product?.origin} className={field} /></label>
           <label className="grid gap-1.5"><span className={label}>Color</span><input name="color" defaultValue={product?.color} className={field} /></label>
@@ -148,7 +183,7 @@ export function ProductForm({ product }: { product?: AdminProduct }) {
           <span className="text-[14px] text-ink">Featured on homepage</span>
         </label>
         <div className="grid gap-4 border-t border-ink/10 pt-4">
-          <p className="eyebrow text-ink/60">SEO (opsional — kosongkan untuk otomatis)</p>
+          <p className="eyebrow text-ink/60">SEO (optional — leave empty for automatic)</p>
           <label className="grid gap-1.5">
             <span className={label}>Meta title (maks 60)</span>
             <input name="metaTitle" maxLength={60} defaultValue={product?.metaTitle ?? ""} placeholder={product?.title ?? ""} className={field} />
@@ -177,12 +212,21 @@ export function ProductForm({ product }: { product?: AdminProduct }) {
         </div>
         <ul className="mt-3 space-y-2">
           {images.map((img, i) => (
-            <li key={img.url + i} className="flex items-center gap-3 rounded-[4px] border border-ink/10 p-2">
-              <span className="relative size-12 overflow-hidden rounded-[3px] bg-phold">
-                <Image src={img.url} alt="" fill sizes="48px" className="object-cover" unoptimized={img.url.endsWith(".svg")} />
-              </span>
-              <span className="eyebrow flex-1 truncate text-ink/60">{i === 0 ? "PRIMARY" : img.url.split("/").pop()}</span>
-              <button type="button" onClick={() => setImages(images.filter((_, j) => j !== i))} className="eyebrow text-oxide">Remove</button>
+            <li key={img.url + i} className="rounded-[4px] border border-ink/10 p-2">
+              <div className="flex items-center gap-3">
+                <span className="relative size-12 flex-none overflow-hidden rounded-[3px] bg-phold">
+                  <Image src={img.url} alt="" fill sizes="48px" className="object-cover" unoptimized={img.url.endsWith(".svg")} />
+                </span>
+                <span className="eyebrow flex-1 truncate text-ink/60">{i === 0 ? "PRIMARY" : img.url.split("/").pop()}</span>
+                <button type="button" onClick={() => setImages(images.filter((_, j) => j !== i))} className="eyebrow text-oxide">Remove</button>
+              </div>
+              <input
+                value={img.alt}
+                onChange={(e) => setImages(images.map((im, j) => (j === i ? { ...im, alt: e.target.value } : im)))}
+                placeholder={i === 0 ? "Alt text — describe the stone (required)" : "Alt text (optional)"}
+                aria-label={`Alt text for photo ${i + 1}`}
+                className="mt-2 h-[36px] w-full rounded-[4px] border border-ink/15 bg-transparent px-2.5 text-[13px] text-ink focus:outline-none focus:ring-1 focus:ring-gold"
+              />
             </li>
           ))}
         </ul>
@@ -192,8 +236,18 @@ export function ProductForm({ product }: { product?: AdminProduct }) {
           disabled={saving}
           className="mt-6 inline-flex h-[46px] w-full items-center justify-center gap-2.5 rounded-full bg-ink px-5 text-[15px] font-medium text-milk transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.97] disabled:opacity-60"
         >
-          {saving ? "Saving…" : product ? "Save changes →" : "Publish stone →"}
+          {saving ? "Saving…" : <>{product ? "Save changes" : "Publish stone"} <ArrowRight className="size-4" aria-hidden="true" /></>}
         </button>
+        {product && (
+          <button
+            type="button"
+            onClick={onDelete}
+            disabled={deleting}
+            className="mt-2 inline-flex h-[40px] w-full items-center justify-center rounded-full border border-oxide/40 px-5 text-[13px] font-medium text-oxide transition-colors hover:bg-oxide/10 disabled:opacity-60"
+          >
+            {deleting ? "Deleting…" : "Delete stone"}
+          </button>
+        )}
         {error && <p className="mt-3 text-[13px] text-oxide">{error}</p>}
       </div>
     </form>
